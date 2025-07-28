@@ -1,0 +1,3 @@
+pip install Pillow //image field
+pip install psycopg2-binary
+pip install webcolors==1.11.1  //pour les coleurs
