@@ -49,6 +49,8 @@ class CustomOrder(models.Model):
         return f"{self.command_type.capitalize()} de {self.user.full_name} ({self.created_at.date()})"
 
 
+
+
 # this is for the  simple standard order for the client and the dropshipper
 class Order(models.Model):
 
