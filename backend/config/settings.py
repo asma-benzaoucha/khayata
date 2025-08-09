@@ -32,8 +32,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Vite dev server
+    "http://127.0.0.1:5173",
+]
 
-# Application definition
+CORS_ALLOW_CREDENTIALS = True
+
+APPEND_SLASH = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -44,8 +50,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Backendkadi',
     'rest_framework',
-]
+    'rest_framework.authtoken',
 
+]
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+}
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -54,6 +66,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -124,3 +138,32 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_FROM_EMAIL = os.getenv("DATABASE_PASSWORD")
+AUTH_USER_MODEL = 'Backendkadi.User'# psq j'ai mon propre model user il faut dit ca à django pour qu'il n'utilise pas le model user qui est par defaut 
+FRONTEND_URL = 'http://localhost:5173'
+
+
+import os
+
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT"))  
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS").lower() == "true" 
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+
+
+#il faut le supprime apres que je termine le dev  autorise le frontend pour tous tester 
+CORS_ALLOW_ALL_ORIGINS = True
+
+
+# hadi zadtha ghi bah nmodifier les valeurs pardefaut ta3 token
+# Là, on a simplement augmenté la durée de vie de l’access token à 7 jours.
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),  # Token valable 7 jours
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
