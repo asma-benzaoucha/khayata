@@ -5,25 +5,14 @@ from django.core.mail import send_mail
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
-
 from rest_framework import status, serializers, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.authtoken.models import Token  # si token auth
 from rest_framework.decorators import action
-
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from .models import User, Couturiere, UserDocuments, Dropshipper
-from .serializers import (
-    CouturiereSerializer,
-    CustomTokenObtainPairSerializer,
-    LoginSerializer,
-    UserDocumentsSerializer,
-    CouturiereSignupSerializer,
-)
 from .utils import (
     send_verification_email,
     generate_otp,
@@ -31,9 +20,19 @@ from .utils import (
     verify_signed_otp_token,
 )
 
-class Command(BaseCommand):
-    help = 'Supprime les utilisateurs inactifs dont les tokens ont expiré.'
+from .models import User, Couturiere, UserDocuments, Dropshipper,Order
+from .serializers import (
+    CouturiereSerializer,
+    CustomTokenObtainPairSerializer,
+    LoginSerializer,
+    UserDocumentsSerializer,
+    CouturiereSignupSerializer,
+)
 
+
+
+
+class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         expired_users = User.objects.filter(is_active=False, token_expiration__lt=timezone.now())
         count = expired_users.count()
@@ -48,7 +47,14 @@ def verify_email(request, uid, token):
         user_id = urlsafe_base64_decode(uid).decode()
         user = User.objects.get(id=user_id)
 
-        login_link = "http://localhost:5173/login"  # URL de ton frontend (change si besoin)
+        login_link = "http://localhost:5173/login"  # URL pour les utilisateurs normaux
+        login_link2 = "http://localhost:5173/loginClient"  # URL pour les clients
+        
+        # Déterminer le lien de redirection en fonction du rôle
+        if hasattr(user, 'role') and user.role == 'client':
+            redirect_link = login_link2
+        else:
+            redirect_link = login_link
 
         # Si déjà activé
         if user.is_active:
@@ -63,7 +69,7 @@ def verify_email(request, uid, token):
                     <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                         <h2 style="color: #E5B62B;">تم تفعيل بريدك الإلكتروني بالفعل</h2>
                         <p style="font-size: 16px; color: #333;">يمكنك الآن تسجيل الدخول مباشرة إلى حسابك.</p>
-                        <a href="{login_link}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #E5B62B; color: white; text-decoration: none; border-radius: 6px; font-size: 16px;">الانتقال إلى صفحة تسجيل الدخول</a>
+                        <a href="{redirect_link}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #E5B62B; color: white; text-decoration: none; border-radius: 6px; font-size: 16px;">الانتقال إلى صفحة تسجيل الدخول</a>
                     </div>
                     </body>
                 </html>
@@ -90,7 +96,7 @@ def verify_email(request, uid, token):
                 <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     <h2 style="color: #E5B62B;">تم التحقق من بريدك الإلكتروني بنجاح</h2>
                     <p style="font-size: 16px; color: #333;">يمكنك الآن تسجيل الدخول إلى حسابك.</p>
-                    <a href="{login_link}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #E5B62B; color: white; text-decoration: none; border-radius: 6px; font-size: 16px;">الانتقال إلى صفحة تسجيل الدخول</a>
+                    <a href="{redirect_link}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #E5B62B; color: white; text-decoration: none; border-radius: 6px; font-size: 16px;">الانتقال إلى صفحة تسجيل الدخول</a>
                 </div>
                 </body>
             </html>
@@ -270,32 +276,20 @@ def upload_document(self, request, pk=None):
     return Response(created_docs, status=201)
 
 
-# class DropshipperViewSet(viewsets.ModelViewSet):
-#     queryset = Dropshipper.objects.all()
-#     serializer_class = DropshipperSerializer
 
-#     @action(detail=True, methods=['post'])
-#     def upload_document(self, request, pk=None):
-#         dropshipper = self.get_object()
-#         user = dropshipper.user
-#         documents = request.FILES.getlist('documents')
 
-#         if not documents:
-#             return Response({'error': 'Aucun fichier fourni'}, status=400)
 
-#         if len(documents) > 5:
-#             return Response({'error': 'Maximum 5 fichiers autorisés'}, status=400)
-
-#         created_docs = []
-#         for document in documents:
-#             doc = UserDocuments.objects.create(
-#                 nom=document,
-#                 user=user
-#             )
-#             created_docs.append({
-#                 'id': doc.id,
-#                 'nom': doc.nom.name,
-#                 'user_id': user.id
-#             })
-
-#         return Response(created_docs, status=201)
+class TopOrdersAPIView(APIView):
+    def get(self, request):
+        # Récupère les 3 commandes "done" avec le prix le plus élevé
+        # Optimisation avec select_related et prefetch_related
+        top_orders = Order.objects.filter(state='done') \
+                                 .select_related('fashion_model') \
+                                 .prefetch_related(
+                                     'fashion_model__images',
+                                     'standard_command_details'
+                                 ) \
+                                 .order_by('-initial_price')[:3]
+        
+        serializer = TopOrderSerializer(top_orders, many=True)
+        return Response(serializer.data)

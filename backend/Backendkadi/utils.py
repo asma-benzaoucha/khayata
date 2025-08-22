@@ -55,6 +55,8 @@ def send_verification_email(user_or_couturiere):
 
 
 
+
+
 def generate_otp():
     return f"{random.randint(100000, 999999)}"
 

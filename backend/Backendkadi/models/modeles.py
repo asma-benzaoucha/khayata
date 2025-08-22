@@ -3,10 +3,11 @@ from .stock import StockVariant
 from .promo import PromoCode
 
 TYPE_CHOICES = [
-    ('dress', 'Robe'),
-    ('abaya', 'Abaya'),
-    ('ensemble', 'Ensemble'),
-]
+    ('femme', 'femme'),
+    ('homme', 'homme'),
+    ('enfant', 'enfant'),
+    
+] 
 
 class FashionModel(models.Model):
     STATE_CHOICES = [
@@ -23,13 +24,12 @@ class FashionModel(models.Model):
     price_per_piece_for_dropshipper = models.DecimalField(max_digits=10, decimal_places=2)
     
     description = models.TextField()
-    folder = models.ImageField(upload_to='models/', blank=True, null=True)
     min_pieces_for_dropshipper = models.PositiveIntegerField()
 
     variants = models.ManyToManyField(StockVariant, related_name='fashion_models')
-    
+    totalquantity=models.PositiveIntegerField(default=10)
     state = models.CharField(max_length=20, choices=STATE_CHOICES, default='waiting')
-    promo_code = models.ForeignKey(PromoCode, on_delete=models.SET_NULL, blank=True, null=True)
+    promo_code = models.ForeignKey(PromoCode, on_delete=models.SET_NULL, blank=True, null=True, related_name='models')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -42,3 +42,15 @@ class FashionModel(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.code})"
+
+
+class ModelImage(models.Model):
+    fashion_model = models.ForeignKey(
+        FashionModel, 
+        on_delete=models.CASCADE, 
+        related_name='images'
+    )
+    image = models.ImageField(upload_to='models/')
+
+    def __str__(self):
+        return f"Image for {self.fashion_model.code}"

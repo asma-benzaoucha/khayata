@@ -1,9 +1,10 @@
 from rest_framework import serializers
-from .models import Couturiere
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate
 from .models import Couturiere, User ,Dropshipper ,UserDocuments
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -15,9 +16,6 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data['password'])
-        
-                # Générer le token
-    
         return super().create(validated_data)
 
 class CouturiereSerializer(serializers.ModelSerializer):
@@ -66,7 +64,7 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, data):
         email = data.get('email')
         password = data.get('password')
-
+                                                                                                                                                            
         user = authenticate(email=email, password=password)
 
         if user is None:
@@ -265,3 +263,6 @@ class CouturiereSignupSerializer(serializers.ModelSerializer):
                 )
             
             return couturiere
+        
+
+

@@ -7,7 +7,8 @@ pip install pip-system-certs
  pip install django-cors-headers
 pip install djangorestframework-simplejwt
 
-
+ 
+pip install PyJWT pip-system-certs django dotenv dj_database_url  djangorestframework django-cors-headers psycopg2-binary webcolors==1.11.1 djangorestframework-simplejwt Pillow
 
 
 

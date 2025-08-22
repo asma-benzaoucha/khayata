@@ -13,6 +13,7 @@ body {
   font-family: 'Amiri', serif;
   font-weight: 700;
 }
+
 /* @import "tailwindcss";
 @import "tw-animate-css"; */
 
@@ -104,6 +105,7 @@ textarea {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
@@ -136,6 +138,7 @@ textarea {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }

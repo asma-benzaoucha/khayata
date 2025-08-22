@@ -1,0 +1,71 @@
+.containerchangename {
+    padding: 32px;
+    max-width: 400px;
+    margin: auto;
+    direction: rtl;
+    font-family: 'Cairo', sans-serif;
+}
+
+.nameheader {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    
+}
+
+.nameheader h1 {
+    font-family: 'Amiri';
+    font-size: 18px;
+    color: #182544;
+    font-weight: bold;
+}
+
+.compte-icon {
+    width: 32px;
+    height: 32px;
+}
+
+/* Bouton stylisé */
+
+
+.btn-confirmcompte {
+width: 50%;
+    background-color: #e0b437;
+    border: none;
+    color: white;
+    font-size: 16px;
+    padding: 8px 0px;
+    border-radius: 16px;
+    cursor: pointer;
+    float: left;
+    transition: background-color 0.3s ease;
+font-family: 'Cairo';
+font-weight: 600;
+}
+.btn-confirmcompte:hover {
+    background-color: #d19e1d;
+}
+
+/* Pour afficher l'erreur */
+.error {
+    color: red;
+    font-size: 14px;
+    margin-top: 0px;
+}
+
+/* InputField : si besoin de surcharger */
+input[type="text"] {
+    direction: rtl;
+}
+
+.edit-icon {
+    position: absolute;
+    bottom: 32%;
+    right: 90%;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    z-index: 1;
+}

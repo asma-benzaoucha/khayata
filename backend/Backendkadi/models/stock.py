@@ -6,7 +6,6 @@ class StockVariant(models.Model):
         ('XS', 'XS'), ('S', 'S'), ('M', 'M'),
         ('L', 'L'), ('XL', 'XL'), ('XXL', 'XXL'), ('XXXL', 'XXXL'),
         ('3XL', '3XL'), ('4XL', '4XL'),
-        ('0–3 mois', '0–3 mois'), ('6–12 mois', '6–12 mois'),
     ]
     COLOR_CHOICES = [(name, name) for name in CSS3_NAMES_TO_HEX]
 

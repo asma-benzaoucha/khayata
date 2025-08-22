@@ -1,0 +1,261 @@
+.iconcomp {
+    width: 25px;
+    height: 25px;
+    margin-top: 5px;
+}
+
+
+.ContentPopupSorry {
+    padding: 20px 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 100%;
+}
+
+.Composant {
+    border: 1px solid #DADAD7;
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    white-space: nowrap;
+    height: 100%;
+    padding: 20px;
+
+}
+
+.titlecontenu {
+    font-weight: 700;
+    font-family: 'Amiri';
+    font-size: 22px;
+    position: relative;
+    right: 0;
+    margin-bottom: 10px;
+}
+
+.contenuComposant {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+
+
+}
+
+.elementline {
+    display: flex;
+    flex-direction: row;
+    gap: 10px
+}
+
+
+.ContentPopupSorry {
+    padding: 20px 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 100%;
+}
+
+.Composant {
+    border: 1px solid #DADAD7;
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    white-space: nowrap;
+    height: 100%;
+    padding: 20px;
+}
+
+.titlecontenu {
+    font-weight: 700;
+    font-family: 'Amiri';
+    font-size: 22px;
+    position: relative;
+    right: 0;
+    margin-bottom: 10px;
+}
+
+.contenuComposant {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.elementline {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.iconcomp {
+    width: 25px;
+    height: 25px;
+    margin-top: 5px;
+}
+
+/* Styles responsives pour mobile */
+@media screen and (max-width: 768px) {
+    .ContentPopupSorry {
+        flex-direction: column;
+        padding: 15px;
+        gap: 20px;
+    }
+    
+    .Composant {
+        width: 100%;
+        white-space: normal;
+        padding: 15px;
+    }
+    
+    .titlecontenu {
+        font-size: 18px;
+        text-align: center;
+    }
+    
+    .elementline {
+        white-space: normal;
+        align-items: flex-start;
+    }
+    
+    .contenuComposant {
+        gap: 15px;
+    }
+}
+
+/* Styles pour le bouton de confirmation (ajoutez cette classe à votre bouton) */
+.confirmation-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 8px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    width: auto;
+    align-self: center;
+}
+
+@media screen and (max-width: 768px) {
+    .confirmation-button {
+        width: 100%;
+        padding: 15px;
+        font-size: 18px;
+        margin-top: 10px;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* .ContentPopupSorry {
+    padding: 20px 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 100%;
+}
+
+.Composant {
+    border: 1px solid #DADAD7;
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    white-space: nowrap;
+    height: 100%;
+    padding: 20px;
+}
+
+.titlecontenu {
+    font-weight: 700;
+    font-family: 'Amiri';
+    font-size: 22px;
+    position: relative;
+    right: 0;
+    margin-bottom: 10px;
+}
+
+.contenuComposant {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.elementline {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.iconcomp {
+    width: 25px;
+    height: 25px;
+    margin-top: 5px;
+}
+
+/* Styles responsives pour mobile */
+/* @media screen and (max-width: 768px) {
+    .ContentPopupSorry {
+        flex-direction: column;
+        padding: 15px;
+        gap: 20px;
+    }
+
+    .Composant {
+        width: 100%;
+        white-space: normal;
+        padding: 15px;
+    }
+
+    .titlecontenu {
+        font-size: 18px;
+        text-align: center;
+    }
+
+    .elementline {
+        white-space: normal;
+        align-items: flex-start;
+    }
+
+    .contenuComposant {
+        gap: 15px;
+    }
+}
+
+/* Styles pour le bouton de confirmation (ajoutez cette classe à votre bouton) */
+/* .confirmation-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 8px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    width: auto;
+    align-self: center;
+}
+
+@media screen and (max-width: 768px) {
+    .confirmation-button {
+        width: 100%;
+        padding: 15px;
+        font-size: 18px;
+        margin-top: 10px;
+    }
+}  */

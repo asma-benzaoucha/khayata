@@ -13,9 +13,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-import dj_database_url
+import dj_database_url #l9itk drtilo import mais ma5damtich bih . 5damt bih f DATABASES section 
 
-load_dotenv()  # charge le fichier .env
+
+load_dotenv()  # load_dotenv() charge les variables du fichier .env (pratique pour garder les secrets hors du code).
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,20 +26,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-cqn^h0+lq*n!0b%65zpl4d1v%_9)75u)@8k#i4g4m=(1^#sb^j'
+SECRET_KEY = os.getenv("SECRET_KEY")
+#le secret key du projet doit etre invisible dans .env 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True # dans la production ca devient false 
 
 ALLOWED_HOSTS = []
+# ALLOWED_HOSTS C’est une liste qui indique à Django :
 
+# “Accepte uniquement les requêtes HTTP qui viennent de ces noms de domaines ou adresses IP.”
+# pour le moment est vide en mode dev veut dire tous les host mais il faut changer ca en mode production 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
     "http://127.0.0.1:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-
+#autorise cookies/headers d’auth
 APPEND_SLASH = True
 
 INSTALLED_APPS = [
@@ -49,24 +54,30 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'Backendkadi',
+    'Client',
     'rest_framework',
     'rest_framework.authtoken',
+    'corsheaders',
+    
 
 ]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
+        #'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        #puisque rana n5dmo f jwttoken mchi TokenAuthentication
     ),
 }
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    
 
 ]
 
@@ -100,6 +111,8 @@ DATABASES = {
         'PORT': os.getenv("DATABASE_PORT"),
     }
 }
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -138,7 +151,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-DEFAULT_FROM_EMAIL = os.getenv("DATABASE_PASSWORD")
 AUTH_USER_MODEL = 'Backendkadi.User'# psq j'ai mon propre model user il faut dit ca à django pour qu'il n'utilise pas le model user qui est par defaut 
 FRONTEND_URL = 'http://localhost:5173'
 
@@ -156,7 +168,11 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
 #il faut le supprime apres que je termine le dev  autorise le frontend pour tous tester 
 CORS_ALLOW_ALL_ORIGINS = True
-
+#hna ki drna haka ca va ecraser la liste ta3 
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",
+#     "http://127.0.0.1:5173",
+# ]
 
 # hadi zadtha ghi bah nmodifier les valeurs pardefaut ta3 token
 # Là, on a simplement augmenté la durée de vie de l’access token à 7 jours.
@@ -167,3 +183,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=7),  # Token valable 7 jours
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
