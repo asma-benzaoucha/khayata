@@ -1,4 +1,14 @@
 /* Styles de base */
+.specialtext {
+    font-size: 16px;
+    font-family: 'Cairo';
+    background-color: #DBEAFE;
+    padding: 2px 12px;
+    border-radius: 12px;
+    margin-right: 24px;
+
+}
+
 .CardContainer {
     border: rgb(147, 141, 141) solid 1px;
     margin: 10px;
@@ -65,9 +75,7 @@
     margin-left: 30px;
 }
 
-.photocommand {
-    margin-right: 30px;
-}
+
 
 .photobutton {
     border: 1px solid black;
@@ -256,6 +264,12 @@
 
 /* Smartphones */
 @media (max-width: 480px) {
+    .specialtext {
+        font-size: 12px;
+        margin-left: 10px;
+        font-weight: 600;
+    }
+
     .CardContainer {
         padding: 12px;
         margin: 5px;
@@ -328,22 +342,22 @@
     }
 
 
-.elemntcard img {
-    margin-right: 10px;
-    margin-left: 0;
-}
+    .elemntcard img {
+        margin-right: 10px;
+        margin-left: 0;
+    }
 
     .elemntcard span {
         flex: 1;
         text-align: right;
     }
 
-           .CardContainer img {
-            width: 18px;
-            height: 18px;
-            bottom: 2px;
-            margin-left: 15px;
-        }
+    .CardContainer img {
+        width: 18px;
+        height: 18px;
+        bottom: 2px;
+        margin-left: 15px;
+    }
 }
 
 /* Très petits écrans */
@@ -381,7 +395,7 @@
         margin-right: 15px;
     }
 
-        .CardContainer img {
+    .CardContainer img {
         width: 25px;
         height: 25px;
 

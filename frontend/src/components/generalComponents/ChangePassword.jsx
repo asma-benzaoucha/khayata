@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import InputField from "../generalComponents/Inputfield";
+import Toast from "../generalComponents/Toast";
 import lockIcon from '../../assets/icons/lock.png';
 import "../../style/compteStyle/ChangePassword.css";
+import api from '../../apimanagement/api';
 
 export default function ChangePassword() {
   const [form, setForm] = useState({
@@ -10,125 +12,200 @@ export default function ChangePassword() {
     confirm: ''
   });
 
-const [errors, setErrors] = useState({
-  current: '',
-  newPass: '',
-  confirm: ''
-});  
-const [isSubmitted, setIsSubmitted] = useState(false);
-  const [shake, setShake] = useState(false);
-
- 
-
-  const handleInputChange = (name, value) => {
-    setForm(prev => ({ ...prev, [name]: value }));
-   isFormValid();
-  };
-
-  const isFormValid = () => {
-  let valid = true;
-  let newErrors = {
+  const [errors, setErrors] = useState({
     current: '',
     newPass: '',
     confirm: ''
+  });  
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [shake, setShake] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [apiError, setApiError] = useState("");
+
+  const handleInputChange = (name, value) => {
+    setForm(prev => ({ ...prev, [name]: value }));
+    // Clear errors when user types
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    if (apiError) setApiError("");
   };
 
-  if (!form.current) {
-    newErrors.current = 'يرجى إدخال كلمة المرور الحالية';
-    valid = false;
-  }
+  const isFormValid = () => {
+    let valid = true;
+    let newErrors = {
+      current: '',
+      newPass: '',
+      confirm: ''
+    };
 
-  if (!form.newPass) {
-    newErrors.newPass = 'يرجى إدخال كلمة المرور الجديدة';
-    valid = false;
-  }
+    if (!form.current) {
+      newErrors.current = 'يرجى إدخال كلمة المرور الحالية';
+      valid = false;
+    }
 
-  if (!form.confirm) {
-    newErrors.confirm = 'يرجى تأكيد كلمة المرور الجديدة';
-    valid = false;
-  }
+    if (!form.newPass) {
+      newErrors.newPass = 'يرجى إدخال كلمة المرور الجديدة';
+      valid = false;
+    }
 
-  if (form.newPass && form.confirm && form.newPass !== form.confirm) {
-    newErrors.confirm = 'كلمتا المرور غير متطابقتين';
-    valid = false;
-  }
+    if (!form.confirm) {
+      newErrors.confirm = 'يرجى تأكيد كلمة المرور الجديدة';
+      valid = false;
+    }
 
-  setErrors(newErrors);
-  return valid;
-};
+    if (form.newPass && form.confirm && form.newPass !== form.confirm) {
+      newErrors.confirm = 'كلمتا المرور غير متطابقتين';
+      valid = false;
+    }
 
+    setErrors(newErrors);
+    return valid;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitted(true);
+    setApiError("");
+
+    if (!isFormValid()) {
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Vérifier d'abord si nous avons un refresh token
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        window.location.href = '/loginClient';
+        setLoading(false);
+        return;
+      }
+      
+      // Utilisation de l'API personnalisée avec authentification
+      const response = await api.withAuth(true, true).post('/api/changepassword/', {
+        password: form.current,
+        newPassword: form.newPass
+      });
+
+      const data = response.data;
+
+      if (response.status === 200) {
+        setShowToast(true); // Afficher le toast
+        // Reset form on success
+        setForm({
+          current: '',
+          newPass: '',
+          confirm: ''
+        });
+        setIsSubmitted(false);
+      } else {
+        // Gérer les erreurs spécifiques de l'API
+        if (data.password) {
+          setApiError(data.password[0]);
+        } else if (data.newPassword) {
+          setErrors(prev => ({ ...prev, newPass: data.newPassword[0] }));
+        } else {
+          setApiError(data.message || "حدث خطأ أثناء تغيير كلمة المرور");
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors du changement de mot de passe:", error);
+      
+      // Les erreurs d'authentification sont gérées par l'intercepteur
+      if (error.response?.status === 403) {
+        setApiError("ليس لديك الصلاحية لتغيير كلمة المرور");
+      } else if (!error.message?.includes('Authentication') && 
+                 !error.message?.includes('refresh token')) {
+        // Afficher seulement les erreurs non liées à l'authentification
+        setApiError("حدث خطأ في الاتصال بالخادم");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <section className="containerchangepassword">
-      <div className="field-wrapper">
-        <section className="nameheader">
-          <img src={lockIcon} alt="lock" className="compte-icon" />
-          <h1>تغيير كلمة المرور</h1>
-        </section>
+    <>
+      <Toast
+        show={showToast}
+        onClose={() => setShowToast(false)}
+        type="success"
+        title="تمت العملية بنجاح"
+        message="تم تغيير كلمة المرور بنجاح"
+        duration={5000}
+        position="bottom-right"
+      />
 
-        <InputField
-          titre="كلمة المرور الحالية"
-          placeholder="يمكنك تعبئة كلمة المرور الحالية"
-          type="password"
-          size="oneline"
-          name="current"
-          value={form.current}
-          onChange={(e) => handleInputChange('current', e.target.value)}
-          hasError={isSubmitted && !!errors}
-        />
-        {isSubmitted && errors.current && (
-                  <p className="error">{errors.current}</p>
-                )}
+      <section className="containerchangepassword">
+        <div className="field-wrapper">
+          <section className="nameheader">
+            <img src={lockIcon} alt="lock" className="compte-icon" />
+            <h1>تغيير كلمة المرور</h1>
+          </section>
 
-        <InputField
-          titre="كلمة المرور الجديدة"
-          placeholder="يمكنك إنشاء كلمة مرور خاصة بك"
-          type="password"
-          size="oneline"
-          name="newPass"
-          value={form.newPass}
-         onChange={(e) => handleInputChange('newPass', e.target.value)}
-          hasError={isSubmitted && !!errors}
-        />
-         {isSubmitted && errors.newPass && (
-                  <p className="error">{errors.newPass}</p>
-                )}
+          <InputField
+            titre="كلمة المرور الحالية"
+            placeholder="يمكنك تعبئة كلمة المرور الحالية"
+            type="password"
+            size="oneline"
+            name="current"
+            value={form.current}
+            onChange={(e) => handleInputChange('current', e.target.value)}
+            hasError={isSubmitted && !!errors.current}
+          />
+          {isSubmitted && errors.current && (
+            <p className="error">{errors.current}</p>
+          )}
 
-        <InputField
-          titre="تأكيد كلمة المرور:"
-          placeholder="أعد تعبئة نفس كلمة المرور الجديدة"
-          type="password"
-          size="oneline"
-          name="confirm"
-          value={form.confirm}
-          onChange={(e) => handleInputChange('confirm', e.target.value)}
-          hasError={isSubmitted && !!errors}
-        />
-{isSubmitted && errors.confirm && (
-                  <p className="error">{errors.confirm}</p>
-                )}
-       
-      </div>
+          <InputField
+            titre="كلمة المرور الجديدة"
+            placeholder="يمكنك إنشاء كلمة مرور خاصة بك"
+            type="password"
+            size="oneline"
+            name="newPass"
+            value={form.newPass}
+            onChange={(e) => handleInputChange('newPass', e.target.value)}
+            hasError={isSubmitted && !!errors.newPass}
+          />
+          {isSubmitted && errors.newPass && (
+            <p className="error">{errors.newPass}</p>
+          )}
 
-      <div className="button-group">
-        <button
-          type="submit"
-          className={`btn-confirmcompte ${shake ? "shake" : ""}`}
-          onClick={(e) => {
-            e.preventDefault();
-            setIsSubmitted(true);
+          <InputField
+            titre="تأكيد كلمة المرور:"
+            placeholder="أعد تعبئة نفس كلمة المرور الجديدة"
+            type="password"
+            size="oneline"
+            name="confirm"
+            value={form.confirm}
+            onChange={(e) => handleInputChange('confirm', e.target.value)}
+            hasError={isSubmitted && !!errors.confirm}
+          />
+          {isSubmitted && errors.confirm && (
+            <p className="error">{errors.confirm}</p>
+          )}
 
-            if (isFormValid()) {
-              alert("✅ النموذج صالح وجاهز للإرسال!");
-            } else {
-              setShake(true);
-              setTimeout(() => setShake(false), 500);
-            }
-          }}
-        >
-          تحديث كلمة المرور
-        </button>
-      </div>
-    </section>
+          {apiError && (
+            <p className="error">{apiError}</p>
+          )}
+        </div>
+
+        <div className="button-group">
+          <button
+            type="submit"
+            className={`btn-confirmcompte ${shake ? "shake" : ""}`}
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? "جاري التحديث..." : "تحديث كلمة المرور"}
+          </button>
+        </div>
+      </section>
+    </>
   );
 }

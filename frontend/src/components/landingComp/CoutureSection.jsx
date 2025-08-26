@@ -14,7 +14,7 @@ const CoutureSection = () => {
           </p>
           <div className="couture-stat">
             <img src={etoile} alt="etoile" />
-            <span className="stat-text"><strong>+100 خياط محترف</strong><br />من مختلف أنحاء الوطن</span>
+            <span className="stat-text"><strong>العديد من الخياطين</strong><br />من مختلف أنحاء الوطن</span>
           </div>
           <button className="join-button">انضم الآن</button>
         </div>

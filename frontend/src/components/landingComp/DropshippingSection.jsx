@@ -1,12 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import '../../style/landingStyle/DropshippingSection.css';
 import modeles from "../../assets/icons/modeles.png";
 import livraison from "../../assets/icons/livraison.png";
 import time from "../../assets/icons/time.png";
 import money from "../../assets/icons/money.png";
 import whatsapp from "../../assets/icons/whatsapp.png";
+import axios from 'axios';
 
 export default function DropshippingSection() {
+  const [whatsappLink, setWhatsappLink] = useState("https://chat.whatsapp.com/GHvAxP5Jb5sFNQHqaoRgsw?mode=ac_t");
+
+  useEffect(() => {
+    axios.get("http://127.0.0.1:8000/clientapi/sociallinks/")
+      .then((res) => {
+        if (res.data && res.data.length > 0) {
+          const apiData = res.data[0];
+          // Utiliser le groupe dropshipping de l'API s'il existe, sinon garder la valeur par défaut
+          if (apiData.group_dropshipping) {
+            setWhatsappLink(apiData.group_dropshipping);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Erreur de récupération des liens dropshipping:", err);
+        // Garde le lien par défaut en cas d'erreur
+      });
+  }, []);
+
   const features = [
     {
       icon: modeles,
@@ -34,7 +54,7 @@ export default function DropshippingSection() {
   const steps = [
     {
       number: 1,
-      text: "سجل في المنصة كمتريشم"
+      text:"سجل في المنصة كمترشح"
     },
     {
       number: 2,
@@ -111,7 +131,7 @@ export default function DropshippingSection() {
                 </button>
                
                    <a
-                     href="https://chat.whatsapp.com/GHvAxP5Jb5sFNQHqaoRgsw?mode=ac_t"
+                     href={whatsappLink}
                      target="_blank"
                     rel="noopener noreferrer"
                     className="whatsapp-btn"

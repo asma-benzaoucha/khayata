@@ -28,17 +28,16 @@ class CustomOrder(models.Model):
     nameorder=models.CharField(max_length=50, blank=False, null=False)
     numTelephone = models.CharField(max_length=10,validators=[RegexValidator(r'^\d{10}$', 'Le numéro doit contenir exactement 10 chiffres.')],blank=False, null=False)
     exactaddress=models.CharField(max_length=50,blank=False, null=False)
-    wilaya = models.ForeignKey( "WilayaDelivery", on_delete=models.CASCADE, related_name="customorders_details",null=False, blank=False,
-    )
+    wilaya = models.ForeignKey( "WilayaDelivery", on_delete=models.CASCADE, related_name="customorders_details",null=False, blank=False,)
+    initial_price= models.DecimalField(max_digits=10, decimal_places=2, blank=True,null=True)
     command_type = models.CharField(max_length=20, choices=COMMAND_TYPE_CHOICES)
-    model_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    model_type = models.CharField(max_length=20, choices=TYPE_CHOICES, null=True)
     deadline = models.DateField()
     description = models.TextField(blank=True, null=True)
     command_details = models.ManyToManyField(StockVariant, related_name='orders')
     state = models.CharField(max_length=20, choices=STATE_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
     
     def total_requested_quantity(self):
         return sum(variant.quantity for variant in self.command_details.all())

@@ -370,9 +370,10 @@ export default function RegistrationClient() {
                 className="registration-checkbox"
               />
               <label className="registration-terms-label">
-                أوافق على <span className="registration-terms-link">شروط الاستخدام</span>,{" "}
-                <span className="registration-terms-link">سياسة الخصوصية</span>
-              </label>
+  أوافق على <span className="registration-terms-link">
+    <Link to="/rules">شروط الاستخدام وسياسة الخصوصية</Link>
+  </span>
+</label>
             </div>
             
             {errors.terms && <p className="registration-error-text">{errors.terms}</p>}

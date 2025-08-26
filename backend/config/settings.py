@@ -32,7 +32,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True # dans la production ca devient false 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 # ALLOWED_HOSTS C’est une liste qui indique à Django :
 
 # “Accepte uniquement les requêtes HTTP qui viennent de ces noms de domaines ou adresses IP.”
@@ -40,6 +40,7 @@ ALLOWED_HOSTS = []
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
     "http://127.0.0.1:5173",
+    "http://192.168.0.221:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Backendkadi',
     'Client',
+    'Admin',
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
@@ -69,8 +71,8 @@ REST_FRAMEWORK = {
     ),
 }
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { handleNavigationWithAuth } from "../../apimanagement/authUtils";
+import api from "../../apimanagement/api";
 import "../../style/landingStyle/ProductSection.css";
 
-// Icônes de flèche (inchangées)
+// Icônes de flèche
 const ArrowRight = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -15,7 +17,7 @@ const ArrowLeft = () => (
   </svg>
 );
 
-function ProductImageSlider({ images }) {
+function ProductImageSlider({ images, isTopSeller }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const goToPrevious = () => {
@@ -31,104 +33,109 @@ function ProductImageSlider({ images }) {
   };
 
   return (
-    <div className="image-slider-container">
-      <div className="image-container">
-        {images.length > 0 ? (
-          <img src={images[currentIndex]} alt={`Product view ${currentIndex + 1}`} />
-        ) : (
-          <div className="no-image">لا توجد صورة</div>
-        )}
-        <span className="badge">الأكثر مبيعًا</span>
+    <div className="shopping-product-img-container">
+      {images.length > 0 ? (
+        <img 
+          src={images[currentIndex]} 
+          alt={`Product view ${currentIndex + 1}`} 
+          className="shopping-product-image" 
+        />
+      ) : (
+        <div className="no-image">لا توجد صورة</div>
+      )}
+      
+      {/* Afficher le badge seulement si c'est un top seller */}
+      {isTopSeller && <span className="shopping-badge">الأكثر مبيعًا</span>}
 
-        {images.length > 1 && (
-          <>
-            <button className="nav-button prev-button" onClick={(e) => { e.stopPropagation(); goToPrevious(); }}>
-              <ArrowRight />
-            </button>
-            <button className="nav-button next-button" onClick={(e) => { e.stopPropagation(); goToNext(); }}>
-              <ArrowLeft />
-            </button>
+      {images.length > 1 && (
+        <>
+          <button className="shopping-nav-btn shopping-prev-btn" onClick={(e) => { e.stopPropagation(); goToPrevious(); }}>
+            <ArrowLeft />
+          </button>
+          <button className="shopping-nav-btn shopping-next-btn" onClick={(e) => { e.stopPropagation(); goToNext(); }}>
+            <ArrowRight />
+          </button>
 
-            <div className="image-indicators">
-              {images.map((_, index) => (
-                <span
-                  key={index}
-                  className={`indicator ${index === currentIndex ? "active" : ""}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentIndex(index);
-                  }}
-                ></span>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+          <div className="shopping-image-indicators">
+            {images.map((_, index) => (
+              <span
+                key={index}
+                className={`shopping-indicator ${index === currentIndex ? "shopping-indicator-active" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentIndex(index);
+                }}
+              ></span>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
 export default function ProductSection() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Fonction pour vérifier si un JWT est expiré
-  const isTokenExpired = (token) => {
-    if (!token) return true;
-    
+  const handleProtectedNavigation = async (path) => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const expirationTime = payload.exp * 1000; // Convertir en millisecondes
-      const currentTime = Date.now();
-      
-      return expirationTime <= currentTime;
+      await handleNavigationWithAuth(navigate, path, false);
     } catch (error) {
-      console.error('Erreur lors du décodage du token:', error);
-      return true; // En cas d'erreur, considérer comme expiré
-    }
-  };
-  
-  // Fonction pour gérer la navigation selon le token
-  const handleNavigation = (path) => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    
-    // Si pas de refresh token ou token expiré, aller au login
-    if (!refreshToken || isTokenExpired(refreshToken)) {
-      navigate("/loginClient");
-    } else {
-      // Refresh token valide, aller vers la page demandée
-      navigate(path);
+      console.error('Navigation error:', error);
     }
   };
 
   const handleDiscoverMore = () => {
-    handleNavigation("/shopping");
+    handleProtectedNavigation("/shopping");
   };
 
   const handleCustomDesign = () => {
-    handleNavigation("/special");
+    handleProtectedNavigation("/special");
   };
 
   const handleBrowseAll = () => {
-    handleNavigation("/shopping");
+    handleProtectedNavigation("/shopping");
   };
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/clientapi/top-selling-models/")
-      .then((res) => res.json())
-      .then((data) => {
-        // Adapter le format des images
-        const formatted = data.map((item, index) => ({
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        // ✅ Requête publique - pas d'authentification nécessaire
+        const response = await api.withAuth(false).get("/clientapi/top-selling-models/");
+        
+        const formatted = response.data.map((item, index) => ({
           id: index,
           title: item.name,
           price: item.price_per_piece_for_client + " دج",
           sizes: item.sizes || [],
           images: item.images.map((img) => img.image),
+          selectionType: item.selection_type, // Conserver le type de sélection
+          isTopSeller: item.selection_type === "top" // Ajouter un flag pour les tops
         }));
+        
         setProducts(formatted);
-      })
-      .catch((err) => console.error("Erreur API:", err));
+      } catch (error) {
+        console.error("Erreur API:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
   }, []);
+
+  if (loading) {
+    return (
+      <section className="product-section">
+        <div className="loading-container">
+          <p>جاري تحميل المنتجات...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -141,24 +148,28 @@ export default function ProductSection() {
         <div className="product-scroll-container">
           <div className="product-grid">
             {products.map((product) => (
-              <div className="product-card" key={product.id}>
-                <ProductImageSlider images={product.images} />
-                <div className="product-info">
-                  <div className="title-price">
-                    <h3>{product.title}</h3>
-                    <span className="price">{product.price}</span>
+              <div className="shopping-product-card" key={product.id}>
+                {/* Passer isTopSeller au slider */}
+                <ProductImageSlider 
+                  images={product.images} 
+                  isTopSeller={product.isTopSeller} 
+                />
+                <div className="shopping-product-info">
+                  <div className="shopping-product-header">
+                    <h3 className="shopping-product-title">{product.title}</h3>
+                    <span className="shopping-product-price">{product.price}</span>
                   </div>
-                  <p className="sizes">
+                  <p className="shopping-product-sizes">
                     <span>المقاسات:</span>
                     {product.sizes.length > 0 ? (
                       product.sizes.map((size, idx) => (
-                        <span key={idx} className="size">{size}</span>
+                        <span key={idx} className="shopping-size-item">{size}</span>
                       ))
                     ) : (
-                      <span className="size">غير متوفر</span>
+                      <span className="shopping-size-item">غير متوفر</span>
                     )}
                   </p>
-                  <button className="buy-button" onClick={handleDiscoverMore}>
+                  <button className="shopping-buy-btn" onClick={handleDiscoverMore}>
                     اكتشف المزيد
                   </button>
                 </div>

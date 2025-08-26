@@ -1,6 +1,6 @@
 /* Arrière-plan flouté */
 .blurbackground {
-    all:revert;
+   
     position: fixed;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.3);
@@ -10,41 +10,50 @@
     align-items: center;
     z-index: 1000;
     direction: rtl;
-    
-    /* Interface arabe */
+    padding: 20px;
 }
 
 /* Conteneur du popup */
 .containerpopup {
-    all:revert;
     background-color: white;
     border-radius: 16px;
     position: relative;
     text-align: center;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     border: solid 3.5px #DDDDC6;
-}
-.containerheaderpopup{
-    all:revert;
-padding: 20px 25px;
-border-radius: 15px 15px 0  0;
+    max-width: 90%;
+   
+    max-height: 90vh;
+    overflow-y: auto;
+    display: block;
+    margin-top: auto;
+        /* Centre horizontalement */
+        margin-bottom: auto
+    
 }
 
+.containerheaderpopup {
+    padding: 20px 25px;
+    border-radius: 15px 15px 0 0;
+    
+
+}
 
 /* Bouton de fermeture */
 .iconsortirpopup {
     position: absolute;
     top: 10px;
     left: 10px;
-    /* côté gauche car rtl */
     color: #777;
     cursor: pointer;
+    z-index: 10;
 }
 
 /* Icône centrée */
 .iconpopup {
-    all:revert;
     margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
 }
 
 /* Titre */
@@ -53,6 +62,7 @@ border-radius: 15px 15px 0  0;
     font-weight: bold;
     margin-bottom: 8px;
     font-family: 'Amiri', serif;
+    word-wrap: break-word;
 }
 
 /* Sous-titre */
@@ -61,11 +71,13 @@ border-radius: 15px 15px 0  0;
     color: #666;
     margin-bottom: 15px;
     font-family: 'Cairo', sans-serif;
+    word-wrap: break-word;
 }
 
 /* Zone de contenu */
 .contenupopup {
     margin-bottom: 20px;
+    padding: 0 15px;
 }
 
 /* Texte si string */
@@ -73,14 +85,15 @@ border-radius: 15px 15px 0  0;
     font-size: 1rem;
     color: #444;
     font-family: 'Cairo', sans-serif;
-    padding: 0px 20px
+    word-wrap: break-word;
+    line-height: 1.5;
 }
 
 /* Bouton */
 .bouttonpopup {
     background-color: #22C55E;
     color: white;
-    padding: 6px 35px;
+    padding: 12px 35px;
     border: none;
     border-radius: 16px;
     cursor: pointer;
@@ -88,10 +101,147 @@ border-radius: 15px 15px 0  0;
     transition: background-color 0.2s ease;
     font-family: 'Cairo', sans-serif;
     margin-bottom: 20px;
+    min-width: 120px;
 }
 
 .bouttonpopup:hover {
     background-color: #24b85d;
+}
+
+.popup-icon {
+    width: 60px !important;
+    height: 60px !important;
+}
+
+/* Media Queries pour mobile */
+@media (max-width: 768px) {
+    .blurbackground {
+        padding: 15px;
+        align-items: flex-start;
+        padding-top: 40px;
+    }
+
+    .containerpopup {
+        max-width: 95%;
+        
+        margin-top: 40%;
+        /* Centre horizontalement */
+        margin-bottom: auto
+    }
+
+    .containerheaderpopup {
+        padding: 15px 20px;
+    }
+
+    .titrepopup {
+        font-size: 1.4rem;
+        margin-bottom: 6px;
+    }
+
+    .soustitrepopup {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+    }
+
+    .contentpopup {
+        font-size: 0.9rem;
+        padding: 0 10px;
+    }
+
+    .bouttonpopup {
+        padding: 10px 25px;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .popup-icon {
+        width: 50px !important;
+        height: 50px !important;
+    }
+
+    .iconsortirpopup {
+        top: 8px;
+        left: 8px;
+    }
+
+    .iconsortirpopup svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .blurbackground {
+        padding: 10px;
+        padding-top: 30px;
+    }
+
+    .containerpopup {
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    .containerheaderpopup {
+        padding: 12px 15px;
+    }
+
+    .titrepopup {
+        font-size: 1.2rem;
+    }
+
+    .soustitrepopup {
+        font-size: 0.85rem;
+    }
+
+    .contenupopup {
+        margin-bottom: 15px;
+        padding: 0 10px;
+    }
+
+    .contentpopup {
+        font-size: 0.85rem;
+    }
+
+    .bouttonpopup {
+        padding: 8px 20px;
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+    }
+
+    .popup-icon {
+        width: 45px !important;
+        height: 45px !important;
+    }
+
+    .iconsortirpopup {
+        top: 6px;
+        left: 6px;
+    }
+
+    .iconsortirpopup svg {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+/* Pour les très petits écrans */
+@media (max-width: 320px) {
+    .titrepopup {
+        font-size: 1.1rem;
+    }
+
+    .soustitrepopup {
+        font-size: 0.8rem;
+    }
+
+    .contentpopup {
+        font-size: 0.8rem;
+    }
+
+    .bouttonpopup {
+        padding: 6px 15px;
+        font-size: 0.8rem;
+    }
 }
 
 .page-turn {
@@ -113,11 +263,7 @@ border-radius: 15px 15px 0  0;
     }
 }
 
-
-.popup-icon{
-    all:revert;
-    width:70px !important;
-    height: 70px !important;
-
+/* Empêcher le défilement du body quand le popup est ouvert */
+body.popup-open {
+    overflow: hidden;
 }
-

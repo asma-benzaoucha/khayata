@@ -27,7 +27,7 @@ class FashionModel(models.Model):
     min_pieces_for_dropshipper = models.PositiveIntegerField()
 
     variants = models.ManyToManyField(StockVariant, related_name='fashion_models')
-    totalquantity=models.PositiveIntegerField(default=10)
+    #totalquantity=models.PositiveIntegerField(default=100000)
     state = models.CharField(max_length=20, choices=STATE_CHOICES, default='waiting')
     promo_code = models.ForeignKey(PromoCode, on_delete=models.SET_NULL, blank=True, null=True, related_name='models')
 

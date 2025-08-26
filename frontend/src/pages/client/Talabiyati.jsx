@@ -9,6 +9,7 @@ import price from '../../assets/icons/price.png';
 import telephone from '../../assets/icons/whatsapp.png';
 import refuse from '../../assets/icons/refuse.png';
 import Navbarshop from "../../components/shoppingComp/Navbarshop";
+import api from "../../apimanagement/api"; // Importez votre instance axios personnalisée
 
 function Talabiyati() {
   const [commandes, setCommandes] = useState([]);
@@ -18,41 +19,35 @@ function Talabiyati() {
   useEffect(() => {
     const fetchCommandes = async () => {
       try {
-        // Récupérer le token JWT depuis le localStorage
-        const token = localStorage.getItem('accessToken');
-        
-        if (!token) {
-          throw new Error('Token d\'authentification manquant. Veuillez vous connecter.');
-        }
-
-        const response = await fetch('http://127.0.0.1:8000/clientapi/allorders', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          }
-        });
-        
-        if (response.status === 401) {
-          // Token invalide ou expiré
-          localStorage.removeItem('access_token');
-          throw new Error('Session expirée. Veuillez vous reconnecter.');
+        // Vérification préalable des tokens - si pas de refresh token, on ne fait même pas la requête
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+          // Redirection immédiate vers le login
+          window.location.href = '/loginClient';
+          return;
         }
         
-        if (response.status === 403) {
-          throw new Error('Vous n\'avez pas les permissions nécessaires.');
-        }
+        // Utilisation de l'API personnalisée avec authentification
+        const response = await api.withAuth(true, true).get('/clientapi/allorders');
         
-        if (!response.ok) {
-          throw new Error(`Erreur serveur: ${response.status}`);
-        }
-        
-        const data = await response.json();
+        const data = response.data;
         const transformedData = transformApiData(data);
         setCommandes(transformedData);
       } catch (err) {
-        setError(err.message);
         console.error("Erreur détaillée:", err);
+        
+        // Si l'erreur concerne l'authentification, on laisse l'intercepteur gérer
+        if (err.response?.status === 401 || err.message?.includes('Authentication') || err.message?.includes('refresh token')) {
+          // Ces erreurs sont gérées par l'intercepteur, on ne fait rien
+          return;
+        } 
+        
+        // Pour les autres erreurs, on les affiche
+        if (err.response?.status === 403) {
+          setError('Vous n\'avez pas les permissions nécessaires.');
+        } else {
+          setError(`Erreur: ${err.message || 'Une erreur est survenue'}`);
+        }
       } finally {
         setLoading(false);
       }
@@ -65,63 +60,69 @@ function Talabiyati() {
     const transformedCommandes = [];
     const API_BASE_URL = "http://127.0.0.1:8000";
 
-    // Traiter les commandes personnalisées
-    if (apiData.custom_orders && apiData.custom_orders.length > 0) {
-      apiData.custom_orders.forEach(order => {
-        transformedCommandes.push({
-          id: order.id,
-          namecommand: order.nameorder || "طلبية مخصصة",
-          photobutton: ["عرض الصور", photo],
-          date: [order.created_at.split('T')[0], date],
-          telephone: [order.numTelephone, telephone],
-          prix: [order.command_details && order.command_details[0]?.quantity 
-                 ? `${parseInt(order.command_details[0].quantity) * 5000}دج` 
-                 : "0دج", price],
-          nbpieces: [order.command_details && order.command_details[0]?.quantity 
-                    ? `${order.command_details[0].quantity} قطعة` 
-                    : "0 قطعة", commande],
-          status: getStatus(order.state),
-          selectedImages: order.custom_images && order.custom_images.length > 0
-                         ? order.custom_images.map(img => `${API_BASE_URL}${img.image}`) 
-                         : [imageaffichage]
-        });
-      });
-    }
-
     // Traiter les commandes standard
-    if (apiData.standard_orders && apiData.standard_orders.length > 0) {
-      apiData.standard_orders.forEach(order => {
-        const pricePerPiece = parseFloat(order.fashion_model?.price_per_piece_for_client || 0);
-        const quantity = order.standard_command_details && order.standard_command_details[0]?.quantity 
-                         ? parseInt(order.standard_command_details[0].quantity) 
-                         : 0;
-        
-        transformedCommandes.push({
-          id: order.id,
-          namecommand: order.fashion_model?.name || "طلبية قياسية",
-          photobutton: ["عرض الصور", photo],
-          date: [order.created_at.split('T')[0], date],
-          telephone: [order.phone_number, telephone],
-          prix: [`${pricePerPiece * quantity}دج`, price],
-          nbpieces: [`${quantity} قطعة`, commande],
-          status: getStatus(order.state),
-          selectedImages: order.fashion_model?.images && order.fashion_model.images.length > 0
-                         ? order.fashion_model.images.map(img => `${API_BASE_URL}${img.image}`) 
-                         : [imageaffichage]
-        });
+  if (apiData.standard_orders && apiData.standard_orders.length > 0) {
+    apiData.standard_orders.forEach(order => {
+      // Calculer la quantité totale
+      const totalQuantity = order.variants 
+        ? order.variants.reduce((sum, variant) => sum + (variant.quantity || 0), 0)
+        : 0;
+      
+      transformedCommandes.push({
+        id: `standard_${order.id}`, // Ajouter un préfixe pour rendre la clé unique
+        namecommand: order.model_name || "طلبية قياسية",
+        photobutton: ["عرض الصور", photo],
+        date: [order.created_at.split('T')[0], date],
+        telephone: [order.phone_number, telephone],
+        prix: [`${order.final_price || 0}دج`, price],
+        nbpieces: [`${totalQuantity} قطعة`, commande],
+        status: getStatus(order.state),
+        selectedImages: order.images && order.images.length > 0
+          ? order.images.map(img => `${API_BASE_URL}${img.image}`)
+          : [imageaffichage],
+        isCustom: false // Ajouter un flag pour identifier les commandes personnalisées
       });
-    }
+    });
+  }
 
-    return transformedCommandes;
-  };
+  // Traiter les commandes personnalisées
+  if (apiData.custom_orders && apiData.custom_orders.length > 0) {
+    apiData.custom_orders.forEach(order => {
+      // Calculer la quantité totale
+      const totalQuantity = order.variants 
+        ? order.variants.reduce((sum, variant) => sum + (variant.quantity || 0), 0)
+        : 0;
+      
+      // Pour les commandes personnalisées, on utilise initial_price
+      // Si initial_price est null, on passe null pour que CommandCard gère l'affichage
+      const customPrice = order.initial_price === null ? null : `${order.initial_price}دج`;
+      
+      transformedCommandes.push({
+        id: `custom_${order.id}`, // Ajouter un préfixe pour rendre la clé unique
+        namecommand: order.nameorder || "طلبية مخصصة",
+        photobutton: ["عرض الصور", photo],
+        date: [order.created_at.split('T')[0], date],
+        telephone: [order.numTelephone, telephone],
+        prix: customPrice === null ? null : [customPrice, price],
+        nbpieces: [`${totalQuantity} قطعة`, commande],
+        status: getStatus(order.state),
+        selectedImages: order.images && order.images.length > 0
+          ? order.images.map(img => `${API_BASE_URL}${img.image}`)
+          : [imageaffichage],
+        isCustom: true // Ajouter un flag pour identifier les commandes personnalisées
+      });
+    });
+  }
+
+  return transformedCommandes;
+};
 
   const getStatus = (state) => {
     switch(state) {
       case 'done':
         return ["مكتملة", "#22C55E", ""];
       case 'cancelled':
-      case 'refused':
-        return ["مرفوضة", "#EF4444", refuse];
+        return ["ملغية", "#EF4444", refuse];
       case 'pending':
         return ["قيد الانتظار", "#F59E0B", ""];
       default:
@@ -131,9 +132,9 @@ function Talabiyati() {
 
   // Fonction pour se déconnecter
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    window.location.href = '/login';
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    window.location.href = '/loginClient';
   };
 
   // Fonction pour rafraîchir la page
@@ -170,40 +171,22 @@ function Talabiyati() {
               <div style={{ textAlign: "center", color: "#9ca3af" }}>
                 <TbBoxOff size={80} />
                 <p style={{ fontSize: "1.2rem", marginTop: "10px" }}>
-                  {error.includes('401') || error.includes('expirée') 
-                    ? 'انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.' 
-                    : error}
+                  {error}
                 </p>
                 <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                  {(error.includes('401') || error.includes('expirée') || error.includes('manquant')) ? (
-                    <button 
-                      onClick={() => window.location.href = '/login'}
-                      style={{
-                        padding: '10px 20px',
-                        backgroundColor: '#3B82F6',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      تسجيل الدخول
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={handleRetry}
-                      style={{
-                        padding: '10px 20px',
-                        backgroundColor: '#10B981',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      إعادة المحاولة
-                    </button>
-                  )}
+                  <button 
+                    onClick={handleRetry}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#10B981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    إعادة المحاولة
+                  </button>
                   <button 
                     onClick={handleLogout}
                     style={{
@@ -252,6 +235,7 @@ function Talabiyati() {
                 nbpieces={cmd.nbpieces}
                 status={cmd.status}
                 selectedImages={cmd.selectedImages}
+                isCustom={cmd.isCustom}
               />
             ))
           )}

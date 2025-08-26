@@ -1,3 +1,4 @@
+
 // src/components/Recherchefilter.jsx
 import React, { useState, useEffect } from "react";
 import "../../style/shoppingStyle/Recherchefilter.css";
@@ -29,13 +30,15 @@ export default function Recherchefilter() {
 
       // Adapter les données au format attendu par ProductCard
       const formatted = data.map((prod, idx) => ({
-        id: idx, // ou utiliser un champ unique du backend si dispo
-        title: prod.name,
-        price: prod.price_per_piece_for_client,
-        images: prod.images.map((img) => img.image), // extraire juste l’URL
-        sizes: prod.sizes || [],
-        description: prod.description,
-      }));
+  id: idx,
+  title: prod.name,
+  price: prod.price_per_piece_for_client,
+  images: prod.images.map((img) => img.image),
+  sizes: prod.sizes || [],
+  description: prod.description,
+  code: prod.code, // Assurez-vous que l'API retourne ce champ
+  variants: prod.variants || [] // Assurez-vous que l'API retourne ce champ
+}));
 
       setProducts(formatted);
     } catch (error) {
@@ -95,6 +98,7 @@ export default function Recherchefilter() {
           <p className="loading-text">جار التحميل...</p>
         ) : (
           <Cards products={filteredProducts} />
+          //on dois passer les parametres au Cards
         )}
       </div>
     </div>

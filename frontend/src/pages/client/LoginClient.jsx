@@ -49,19 +49,17 @@ export default function LoginClient() {
         headers: { 'Content-Type': 'application/json' },
         timeout: 10000,
       });
-
-      localStorage.setItem("accessToken", response.data.access);
-      localStorage.setItem("refreshToken", response.data.refresh);
       localStorage.setItem("user", JSON.stringify(response.data.user));
-
-      // Redirection selon le rôle
       const userRole = response.data.user.role;
-      switch (userRole) {
-        case "client": navigate("/shopping"); break;
-        case "couturiere": navigate("/couturiere-dashboard"); break;
-        case "dropshipper": navigate("/dropshipper-dashboard"); break;
-        default: navigate("/");
+      if (userRole==="client"){
+        localStorage.setItem("accessToken", response.data.access);
+      localStorage.setItem("refreshToken", response.data.refresh);
+        navigate("/shopping")
+      }else {
+        navigate("/");
       }
+    
+      
 
     } catch (error) {
       console.error("Login failed:", error);
@@ -122,9 +120,6 @@ export default function LoginClient() {
       <div className="login-card">
         <div className="login-card-content">
           {/* Header avec bouton de retour et titre à l'intérieur de la carte */}
-          <div className="login-back-container">
-              <ArrowLeft className="login-back-button" onClick={() => navigate(-1)} />
-            </div>
           <div className="login-header">
             
             <h2 className="login-title">تسجيل الدخول</h2>

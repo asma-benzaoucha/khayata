@@ -22,7 +22,7 @@ const Popupimages = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const [transitionDirection, setTransitionDirection] = useState('next');
+  const [transitionDirection, setTransitionDirection] = useState("next");
   const [isZoomed, setIsZoomed] = useState(false);
 
   // Vérifier la taille de l'écran pour déterminer le mode d'affichage
@@ -35,12 +35,12 @@ const Popupimages = ({
 
   // Navigation entre les images avec effet de zoom
   const goToPrevious = () => {
-    if (images.length <= 1) return; // Empêche la navigation s'il n'y a qu'une image
-    setTransitionDirection('prev');
+    if (images.length <= 1) return;
+    setTransitionDirection("prev");
     setIsZoomed(true);
-    
+
     setTimeout(() => {
-      setCurrentIndex((prevIndex) => 
+      setCurrentIndex((prevIndex) =>
         prevIndex === 0 ? images.length - 1 : prevIndex - 1
       );
       setIsZoomed(false);
@@ -48,12 +48,12 @@ const Popupimages = ({
   };
 
   const goToNext = () => {
-    if (images.length <= 1) return; // Empêche la navigation s'il n'y a qu'une image
-    setTransitionDirection('next');
+    if (images.length <= 1) return;
+    setTransitionDirection("next");
     setIsZoomed(true);
-    
+
     setTimeout(() => {
-      setCurrentIndex((prevIndex) => 
+      setCurrentIndex((prevIndex) =>
         prevIndex === images.length - 1 ? 0 : prevIndex + 1
       );
       setIsZoomed(false);
@@ -62,39 +62,14 @@ const Popupimages = ({
 
   // Navigation au clic sur un indicateur
   const goToImage = (index) => {
-    if (images.length <= 1) return; // Empêche la navigation s'il n'y a qu'une image
-    setTransitionDirection(index > currentIndex ? 'next' : 'prev');
+    if (images.length <= 1) return;
+    setTransitionDirection(index > currentIndex ? "next" : "prev");
     setIsZoomed(true);
-    
+
     setTimeout(() => {
       setCurrentIndex(index);
       setIsZoomed(false);
     }, 150);
-  };
-
-  // Gestion du swipe sur mobile
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
-
-  const handleTouchStart = (e) => {
-    if (images.length <= 1) return; // Empêche le swipe s'il n'y a qu'une image
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e) => {
-    if (images.length <= 1) return; // Empêche le swipe s'il n'y a qu'une image
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (images.length <= 1) return; // Empêche le swipe s'il n'y a qu'une image
-    if (touchStart - touchEnd > 50) {
-      // Swipe gauche
-      goToNext();
-    } else if (touchEnd - touchStart > 50) {
-      // Swipe droit
-      goToPrevious();
-    }
   };
 
   if (images.length === 0) return null;
@@ -102,7 +77,7 @@ const Popupimages = ({
   return (
     <div className="popup-blur-background">
       <div className="popup-container">
-        <div 
+        <div
           className="popup-header"
           style={{ backgroundColor: colorbackgroundTitleSousTitle }}
         >
@@ -110,77 +85,79 @@ const Popupimages = ({
             <X size={24} />
           </button>
         </div>
-        
+
         <div className="popup-content-wrapper">
           {/* Icônes de navigation pour desktop - masquées si une seule image */}
           {!isMobile && images.length > 1 && (
             <>
-              <button className="desktop-nav-button left-nav-button" onClick={goToPrevious}>
+              <button
+                className="desktop-nav-button left-nav-button"
+                onClick={goToPrevious}
+              >
                 <ArrowLeft />
               </button>
-              
-              <button className="desktop-nav-button right-nav-button" onClick={goToNext}>
+
+              <button
+                className="desktop-nav-button right-nav-button"
+                onClick={goToNext}
+              >
                 <ArrowRight />
               </button>
             </>
           )}
-          
+
           <div className="popup-content">
             {/* Version Desktop - Affichage de l'image principale */}
             {!isMobile && (
               <div className="desktop-gallery">
                 <div className="image-wrapper main-image">
-                  <img 
-                    src={images[currentIndex]} 
-                    alt="Main" 
-                    className={`${isZoomed ? 'zoom-out' : 'zoom-in'} slide-${transitionDirection}`}
+                  <img
+                    src={images[currentIndex]}
+                    alt="Main"
+                    className={`${isZoomed ? "zoom-out" : "zoom-in"} slide-${transitionDirection}`}
                     key={currentIndex}
                   />
                 </div>
               </div>
             )}
-            
+
             {/* Version Mobile - Affichage d'une seule image */}
             {isMobile && (
-              <div 
-                className="mobile-gallery"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-              >
+              <div className="mobile-gallery">
                 <div className="mobile-image-wrapper">
-                  <img 
-                    src={images[currentIndex]} 
-                    alt="Mobile view" 
-                    className={`${isZoomed ? 'zoom-out' : 'zoom-in'} slide-${transitionDirection}`}
+                  <img
+                    src={images[currentIndex]}
+                    alt="Mobile view"
+                    className={`${isZoomed ? "zoom-out" : "zoom-in"} slide-${transitionDirection}`}
                     key={currentIndex}
                   />
+
+                  {/* Icônes de navigation pour mobile */}
+                  {images.length > 1 && (
+                    <>
+                      <div className="mobile-arrow left" onClick={goToPrevious}>
+                        <ArrowLeft />
+                      </div>
+                      <div className="mobile-arrow right" onClick={goToNext}>
+                        <ArrowRight />
+                      </div>
+                    </>
+                  )}
                 </div>
-                
-                {/* Boutons de navigation mobile - masqués si une seule image */}
-                {images.length > 1 && (
-                  <>
-                    <button className="nav-button prev-button" onClick={goToPrevious}>
-                      <ArrowLeft />
-                    </button>
-                    
-                    <button className="nav-button next-button" onClick={goToNext}>
-                      <ArrowRight />
-                    </button>
-                  </>
-                )}
               </div>
             )}
           </div>
         </div>
-        
+
         {/* Indicateurs de navigation - masqués si une seule image */}
         {images.length > 1 && (
           <div className="navigation-indicators">
             {images.map((_, index) => (
               <button
                 key={index}
-                className={`indicator ${index === currentIndex ? 'active' : ''}`}
+                className={`indicator ${
+                  index === currentIndex ? "active" : ""
+                }`}
                 onClick={() => goToImage(index)}
               />
             ))}

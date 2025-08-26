@@ -12,7 +12,12 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.authtoken.models import Token  # si token auth
 from rest_framework.decorators import action
 from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import ChangePasswordSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from .utils import (
     send_verification_email,
     generate_otp,
@@ -30,7 +35,7 @@ from .serializers import (
 )
 
 
-
+User = get_user_model()
 
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
@@ -39,7 +44,7 @@ class Command(BaseCommand):
         expired_users.delete()
         self.stdout.write(self.style.SUCCESS(f"{count} utilisateurs supprimés."))
 
-User = get_user_model()
+
 
 def verify_email(request, uid, token):
     try:
@@ -136,7 +141,7 @@ class LoginView(APIView):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
-User = get_user_model()
+
 class ForgotPasswordView(APIView):
     def post(self, request):
         email = request.data.get("email")
@@ -187,7 +192,7 @@ class VerifyOTPView(APIView):
             "email": user.email 
         })
 
-User = get_user_model()
+
 class ResetPasswordView(APIView):
     def post(self, request):
         reset_token = request.data.get("reset_token")
@@ -279,17 +284,51 @@ def upload_document(self, request, pk=None):
 
 
 
-class TopOrdersAPIView(APIView):
-    def get(self, request):
-        # Récupère les 3 commandes "done" avec le prix le plus élevé
-        # Optimisation avec select_related et prefetch_related
-        top_orders = Order.objects.filter(state='done') \
-                                 .select_related('fashion_model') \
-                                 .prefetch_related(
-                                     'fashion_model__images',
-                                     'standard_command_details'
-                                 ) \
-                                 .order_by('-initial_price')[:3]
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        # Récupérer l'utilisateur connecté
+        user = request.user
         
-        serializer = TopOrderSerializer(top_orders, many=True)
-        return Response(serializer.data)
+        # Changer le mot de passe
+        user.set_password(serializer.validated_data['newPassword'])
+        user.save()
+        
+        return Response(
+            {"message": "Mot de passe changé avec succès."},
+            status=status.HTTP_200_OK
+        )
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    
+
+User = get_user_model()
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_client_name(request):
+    """
+    Retourne le nom du client authentifié
+    """
+    try:
+        # Récupérer l'utilisateur connecté
+        user = request.user
+        
+        # Retourner le nom du client
+        return Response({
+            'full_name': user.full_name,
+            'email': user.email,
+            'role': user.role
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': 'Erreur serveur'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

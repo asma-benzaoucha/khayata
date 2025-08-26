@@ -15,12 +15,32 @@ export default function FooterSection() {
   ];
 
   const [socialLinks, setSocialLinks] = useState(defaultLinks);
+  const [contactInfo, setContactInfo] = useState({
+    email: "info@Kadi'sHouseholde.com",
+    phone: "0696449925"
+  });
 
   useEffect(() => {
-    axios.get("http://localhost:8000/api/social-links/")
+    axios.get("http://127.0.0.1:8000/clientapi/sociallinks/")
       .then((res) => {
         if (res.data && res.data.length > 0) {
-          setSocialLinks(res.data);
+          const apiData = res.data[0]; // Prendre le premier élément du tableau
+          apiData.whatsapp
+          // Mettre à jour les liens sociaux
+          const updatedLinks = [
+            
+            { name: "facebook", url: apiData.facebook || defaultLinks[1].url },
+            { name: "instagram", url: apiData.instagram || defaultLinks[2].url }
+          ];
+          setSocialLinks(updatedLinks);
+          
+          // Mettre à jour les informations de contact si disponibles
+          if (apiData.whatsapp) {
+            setContactInfo(prev => ({
+              ...prev,
+              phone: apiData.whatsapp
+            }));
+          }
         }
       })
       .catch((err) => {
@@ -61,8 +81,8 @@ export default function FooterSection() {
         <div className="footer-column">
           <h3 className="footer-title">تواصل معنا</h3>
           <p>البريد الإلكتروني :</p>
-          <p>info@Kadi’sHouseholde.com</p>
-          <p>الهاتف : 0696449925</p>
+          <p>{contactInfo.email}</p>
+          <p>الهاتف : {contactInfo.phone}</p>
           <p>مواقع التواصل :</p>
           <div className="footer-social">
             {socialLinks.map((link) => (

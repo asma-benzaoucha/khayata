@@ -1,14 +1,14 @@
 import React, { useState, useRef } from 'react';
 import Popup from "../../components/generalComponents/Popup";
 import { useNavigate } from 'react-router-dom';
-import { FaRegSmile } from "react-icons/fa";
 import InputField from '../../components/generalComponents/Inputfield';
 import Navbarshop from '../../components/shoppingComp/Navbarshop';
 import plus from '../../assets/icons/plus.png';
 import remove from '../../assets/icons/remove.png';
 import "../../style/FormAcheterStyle/FormAcheter.css";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import donepopup from "../../assets/icons/donepopup.png"
+import donepopup from "../../assets/icons/donepopup.png";
+import api from '../../apimanagement/api'; 
 
 const wilayas = [
   "أدرار", "الشلف", "الأغواط", "أم البواقي", "باتنة", "بجاية", "بسكرة", "بشار",
@@ -28,33 +28,34 @@ function ModelSpecialPage() {
   const [shake, setShake] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   const [products, setProducts] = useState([{ 
     id: Date.now(),
     size: "",
-    nbpieces: ""
+    quantity: ""
   }]);
 
   const [form, setForm] = useState({
-    nommodel: "",
+    nameorder: "",
     phone: "",
     wilaya: "",
     address: "",
-    maxdate: "",
-    pdfimg: [],
+    deadline: "",
+    images: [],
     description: "",
   });
 
   const [errors, setErrors] = useState({
-    nommodel: "",
+    nameorder: "",
     phone: "",
     wilaya: "",
     address: "",
     size: "",
-    nbpieces: "",
-    maxdate: "",
-    pdfimg: "",
+    quantity: "",
+    deadline: "",
+    images: "",
     description: "",
   });
 
@@ -62,7 +63,7 @@ function ModelSpecialPage() {
     setProducts([...products, { 
       id: Date.now(),
       size: "",
-      nbpieces: ""
+      quantity: ""
     }]);
   };
 
@@ -87,20 +88,19 @@ function ModelSpecialPage() {
     }));
   };
 
-  // Fonction pour valider l'extension du fichier
   const validateFileExtension = (files) => {
-  if (!files || files.length === 0) return false;
-  
-  const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
-  
-  for (let i = 0; i < files.length; i++) {
-    const fileName = files[i].name.toLowerCase();
-    const isValid = allowedExtensions.some(ext => fileName.endsWith(ext));
-    if (!isValid) return false;
-  }
-  
-  return true;
-};
+    if (!files || files.length === 0) return false;
+    
+    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+    
+    for (let i = 0; i < files.length; i++) {
+      const fileName = files[i].name.toLowerCase();
+      const isValid = allowedExtensions.some(ext => fileName.endsWith(ext));
+      if (!isValid) return false;
+    }
+    
+    return true;
+  };
 
   const validateField = (name, value) => {
     let error = "";
@@ -110,16 +110,16 @@ function ModelSpecialPage() {
       if (!regex.test(value)) error = "يجب أن يتكون الرقم من 10 أرقام";
     }
     if (name === "description") {
-  if (value && value.length > 500) {
-    error = "الوصف يجب ألا يتجاوز 500 حرفاً";
-  }
-}
+      if (value && value.length > 500) {
+        error = "الوصف يجب ألا يتجاوز 500 حرفاً";
+      }
+    }
     
-    if (name === "maxdate") {
+    if (name === "deadline") {
       if (value) {
         const selectedDate = new Date(value);
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset time to compare only dates
+        today.setHours(0, 0, 0, 0);
         
         if (selectedDate <= today) {
           error = "يجب أن يكون التاريخ في المستقبل";
@@ -127,17 +127,27 @@ function ModelSpecialPage() {
       }
     }
 
-    if (name === "nommodel") {
+    if (name === "nameorder") {
       if (value && value.length > 20) {
         error = "اسم الموديل يجب ألا يتجاوز 20 حرفاً";
       }
     }
 
-   if (name === "pdfimg") {
-  if (value && !validateFileExtension(value)) {
-    error = "يُسمح فقط بملفات PDF أو الصور (JPG, PNG, GIF, BMP, WEBP)";
-  }
-}
+     if (name === "address") {
+      if (value === "" || value.trim() === "") { 
+        error = "الرجاء ملء هذا الحقل لإتمام العملية بنجاح";
+      } else if (/^\d+$/.test(value.replace(/\s/g, ''))) {
+        error = "العنوان لا يجب أن يحتوي على أرقام فقط";
+      } else if (!/[\u0600-\u06FF]/.test(value)) {
+        error = "يرجى إدخال العنوان باللغة العربية";
+      }
+    }
+
+    if (name === "images") {
+      if (value && !validateFileExtension(value)) {
+        error = "يُسمح فقط بملفات PDF أو الصور (JPG, PNG, GIF, BMP, WEBP)";
+      }
+    }
 
     setErrors(prev => ({ ...prev, [name]: error }));
   };
@@ -147,71 +157,99 @@ function ModelSpecialPage() {
     validateField(name, value);
   };
 
-const handleFileChange = (files) => {
-  if (files && files.length > 0) {
-    handleInputChange('pdfimg', [...form.pdfimg, ...files]);
-  }
-};
+  const handleFileChange = (files) => {
+    if (files && files.length > 0) {
+      handleInputChange('images', [...form.images, ...files]);
+    }
+  };
 
-const handleRemoveFile = (index) => {
-  const newFiles = [...form.pdfimg];
-  newFiles.splice(index, 1);
-  handleInputChange('pdfimg', newFiles);
-};
+  const handleRemoveFile = (index) => {
+    const newFiles = [...form.images];
+    newFiles.splice(index, 1);
+    handleInputChange('images', newFiles);
+  };
 
   const isFormValid = () => {
-    const requiredFields = {
-      nommodel: form.nommodel,
-      phone: form.phone,
-      wilaya: form.wilaya,
-      address: form.address,
-      pdfimg: form.pdfimg,
-      maxdate: form.maxdate,
-      description: form.description,
-    };
+  const requiredFields = {
+    nameorder: form.nameorder,
+    phone: form.phone,
+    wilaya: form.wilaya,
+    address: form.address,
+    images: form.images,
+    deadline: form.deadline,
+    description: form.description,
+  };
 
-    const newErrors = {};
+  const newErrors = {};
 
-    // Validation des champs obligatoires du formulaire principal
-    Object.entries(requiredFields).forEach(([key, value]) => {
-      if (!value || (typeof value === 'string' && value.trim() === "")) {
-        newErrors[key] = "الرجاء ملء هذا الحقل لإتمام العملية بنجاح";
-      } else if (key === "phone") {
-        const regex = /^0[5-7][0-9]{8}$/;
-        if (!regex.test(value)) {
-          newErrors[key] = "يجب أن يتكون الرقم من 10 أرقام";
-        }
-      } else if (key === "maxdate") {
-        const selectedDate = new Date(value);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        if (selectedDate <= today) {
-          newErrors[key] = "يجب أن يكون التاريخ في المستقبل";
-        }
-      } else if (key === "nommodel") {
-        if (value.length > 20) {
-          newErrors[key] = "اسم الموديل يجب ألا يتجاوز 20 حرفاً";
-        }
-      } else if (key === "pdfimg") {
-        if (!validateFileExtension(value)) {
-          newErrors[key] = "يُسمح فقط بملفات PDF أو الصور (JPG, PNG, GIF, BMP, WEBP)";
-        }
-      }
-    });
+  // Validation des champs obligatoires du formulaire principal
+  Object.entries(requiredFields).forEach(([key, value]) => {
+    // ... (votre code existant)
+  });
 
-    // Validation des champs dans les produits
-    products.forEach((product) => {
-      if (!product.size || product.size.trim() === "") {
-        newErrors[`size-${product.id}`] = "الرجاء ملء الحقلين معا: المقاس، وعدد القطع لإتمام الطلب.";
-      }
-      if (!product.nbpieces || product.nbpieces.trim() === "") {
-        newErrors[`nbpieces-${product.id}`] = "الرجاء ملء الحقلين معا: المقاس، وعدد القطع لإتمام الطلب.";
-      }
-    });
+  // Validation des champs dans les produits
+  products.forEach((product) => {
+    if (!product.size || product.size.trim() === "") {
+      newErrors[`size-${product.id}`] = "الرجاء ملء الحقلين معا: المقاس، وعدد القطع لإتمام الطلب.";
+    }
+    
+    if (!product.quantity || product.quantity.trim() === "") {
+      newErrors[`quantity-${product.id}`] = "الرجاء ملء الحقلين معا: المقاس، وعدد القطع لإتمام الطلب.";
+    } else if (parseInt(product.quantity) <= 0) {
+      // Message spécifique pour la quantité négative ou nulle
+      newErrors[`quantity-${product.id}`] = "عدد القطع يجب أن يكون أكبر من 0";
+    }
+  });
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+  // Fonction pour envoyer les données à l'API
+  const submitOrder = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Préparer les données pour l'API
+      const formData = new FormData();
+      
+      // Ajouter les champs texte
+      formData.append('nameorder', form.nameorder);
+      formData.append('description', form.description);
+      formData.append('deadline', form.deadline);
+      formData.append('numTelephone', form.phone);
+      formData.append('wilaya_name', form.wilaya);
+      formData.append('exactaddress', form.address);
+      formData.append('command_type', 'personalized');
+      
+      // Ajouter les variants (tailles et quantités)
+      const variants = products.map(product => ({
+        size: product.size,
+        quantity: parseInt(product.quantity)
+      }));
+      formData.append('variants', JSON.stringify(variants));
+      
+      // Ajouter les images
+      form.images.forEach((image, index) => {
+        formData.append('images', image);
+      });
+      
+      // Envoyer la requête à l'API
+      const response = await api.withAuth(true, true).post('/clientapi/specialcommand/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      // Gérer la réponse réussie
+      console.log('Commande créée avec succès:', response.data);
+      setShowPopup(true);
+      
+    } catch (error) {
+      console.error('Erreur lors de la création de la commande:', error);
+      alert("Une erreur s'est produite lors de l'envoi de votre commande. Veuillez réessayer.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -233,15 +271,15 @@ const handleRemoveFile = (index) => {
                   titre="اسم الموديل:"
                   placeholder='فستان أنيق'
                   type="text"
-                  name="nommodel"
+                  name="nameorder"
                   size="oneline"
                   down={false}
-                  value={form.nommodel}
-                  onChange={(e) => handleInputChange('nommodel', e.target.value)}
-                  hasError={isSubmitted && !!errors.nommodel}
+                  value={form.nameorder}
+                  onChange={(e) => handleInputChange('nameorder', e.target.value)}
+                  hasError={isSubmitted && !!errors.nameorder}
                 />
-                {isSubmitted && errors.nommodel && (
-                  <p className="error">{errors.nommodel}</p>
+                {isSubmitted && errors.nameorder && (
+                  <p className="error">{errors.nameorder}</p>
                 )}
               </div>
               <div className="field-wrapper">
@@ -265,11 +303,13 @@ const handleRemoveFile = (index) => {
                 <div className="flex-row" key={product.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <InputField 
                     titre="المقاس:" 
+                    special={true}
+                    placeholderSpecial='اختر'
                     type="text" 
                     name="size" 
                     placeholder="S" 
                     size="quarter" 
-                    down={true} 
+                    down={false} 
                     value={product.size} 
                     onChange={(e) => handleProductChange(product.id, 'size', e.target.value)}
                     hasError={isSubmitted && !!errors[`size-${product.id}`]}
@@ -279,13 +319,13 @@ const handleRemoveFile = (index) => {
                   <InputField 
                     titre="عدد القطع:" 
                     type="number"  
-                    name="nbpieces"
+                    name="quantity"
                     placeholder="1" 
                     size="quarter" 
                     down={false}  
-                    value={product.nbpieces} 
-                    onChange={(e) => handleProductChange(product.id, 'nbpieces', e.target.value)}
-                    hasError={isSubmitted && !!errors[`nbpieces-${product.id}`]}
+                    value={product.quantity} 
+                    onChange={(e) => handleProductChange(product.id, 'quantity', e.target.value)}
+                    hasError={isSubmitted && !!errors[`quantity-${product.id}`]}
                   />
 
                   {product.id === products[products.length - 1].id && (
@@ -306,51 +346,50 @@ const handleRemoveFile = (index) => {
                       style={{ cursor: 'pointer', width: '25px', height: '25px' }}
                     />
                   )}
-                  <div className='errorsauterlaligne'>
-                    {(errors[`size-${product.id}`] || errors[`nbpieces-${product.id}`]) && (
-                      <p className="error">
-                        {errors[`size-${product.id}`] || errors[`nbpieces-${product.id}`]}
-                      </p>
-                    )}
-                  </div>
+                 <div className='errorsauterlaligne'>
+  {errors[`size-${product.id}`] && (
+    <p className="error">{errors[`size-${product.id}`]}</p>
+  )}
+  {errors[`quantity-${product.id}`] && (
+    <p className="error">{errors[`quantity-${product.id}`]}</p>
+  )}
+</div>
                   <div className='espace'></div>
                 </div>
               ))}
 
-
-
-            <div className="field-wrapper">
- <InputField
-  titre="ارفاق صورة أو ملف PDF:"
-  type="file"
-  name="pdfimg"
-  size="oneline"
-  onChange={handleFileChange}
-  hasError={isSubmitted && !!errors.pdfimg}
-  accept="image/*,application/pdf"
-  multiple={true}
-  uploadedFiles={form.pdfimg}
-  onRemoveFile={handleRemoveFile}
-  inputRef={fileInputRef} // Passez la référence ici
-/>
-  {isSubmitted && errors.pdfimg && (
-    <p className="error">{errors.pdfimg}</p>
-  )}
-</div>
+              <div className="field-wrapper">
+                <InputField
+                  titre="ارفاق صورة أو ملف PDF:"
+                  type="file"
+                  name="images"
+                  size="oneline"
+                  onChange={handleFileChange}
+                  hasError={isSubmitted && !!errors.images}
+                  accept="image/*,application/pdf"
+                  multiple={true}
+                  uploadedFiles={form.images}
+                  onRemoveFile={handleRemoveFile}
+                  inputRef={fileInputRef}
+                />
+                {isSubmitted && errors.images && (
+                  <p className="error">{errors.images}</p>
+                )}
+              </div>
 
               <div className="field-wrapper">
                 <InputField
                   titre="التاريخ الأقصى للتسليم:"
                   placeholder="jj/mm/yyyy"
                   type="date"
-                  name="maxdate"
+                  name="deadline"
                   size="oneline"
-                  value={form.maxdate}
-                  onChange={(e) => handleInputChange('maxdate', e.target.value)}
-                  hasError={isSubmitted && !!errors.maxdate}
+                  value={form.deadline}
+                  onChange={(e) => handleInputChange('deadline', e.target.value)}
+                  hasError={isSubmitted && !!errors.deadline}
                 />
-                {isSubmitted && errors.maxdate && (
-                  <p className="error">{errors.maxdate}</p>
+                {isSubmitted && errors.deadline && (
+                  <p className="error">{errors.deadline}</p>
                 )}
               </div>
 
@@ -375,8 +414,9 @@ const handleRemoveFile = (index) => {
                 <InputField
                   titre="الولاية:"
                   name="wilaya"
+                  special={true}
+                  placeholderSpecial="اختر الولاية"
                   down={true}
-                  placeholder="الجزائر"
                   size="oneline"
                   value={form.wilaya}
                   onChange={(e) => handleInputChange('wilaya', e.target.value)}
@@ -409,32 +449,32 @@ const handleRemoveFile = (index) => {
                 <button
                   type="submit"
                   className={`btn-confirm ${shake ? "shake" : ""}`}
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.preventDefault();
                     setIsSubmitted(true);
 
                     if (isFormValid()) {
-                      alert("Formulaire valide et prêt à être envoyé !");
-                      setShowPopup(true);
+                      await submitOrder();
                     } else {
-                      setShake(true); // Active le tremblement
-                      setTimeout(() => setShake(false), 500); // Désactive après 0.5s
+                      setShake(true);
+                      setTimeout(() => setShake(false), 500);
                     }
                   }}
+                  disabled={isLoading}
                 >
-                  تأكيد الشراء
+                  {isLoading ? 'جاري الإرسال...' : 'تأكيد الطلب'}
                 </button>
                 {showPopup && (
                   <Popup
                     title="تم استلام طلبيتك "
                     iconPopup={donepopup}
-                    contenu="سنتواصل معك قريبا عبر مكالمة هاتفية أو عبر الواتساب لتأكيد عملية التوصيل. "
+                    contenu="سنتواصل معك قريبا عير الهاتف أو الواتساب لمناقشة جميع التفاصيل و تحديد السعر المناسب .يرجى البقاء متاحا و شكرا ."
                     buttonTexte="حسنا"
                     onClose={() => setShowPopup(false)}
                     onConfirm={() => {
                       setTimeout(() => {
                         setShowPopup(false);
-                        navigate('/special');
+                        navigate('/shopping');
                       }, 400);
                     }}
                   />

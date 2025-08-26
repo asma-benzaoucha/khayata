@@ -79,3 +79,5 @@ def verify_signed_otp_token(token, otp, max_age=600):
     except signing.BadSignature:
         raise serializers.ValidationError("رمز التحقق غير صالح.")
 
+
+

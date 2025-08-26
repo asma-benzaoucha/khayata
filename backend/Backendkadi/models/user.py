@@ -12,6 +12,7 @@ class User(AbstractUser):
         ('dropshipper', 'Dropshipper'),
         ('affiliate', 'Affilié'),
         ('client', 'Client'),
+        ('admin', 'Administrateur'),
     ]
 
     full_name = models.CharField(max_length=255)
@@ -41,7 +42,14 @@ class User(AbstractUser):
             
     def __str__(self):
         return self.full_name
+    
+    
+class Client (models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    agreed_to_policy = models.BooleanField(default=False)
 
+    def __str__(self):
+        return f"Client: {self.user.full_name}"
 
 
 class Couturiere(models.Model):
@@ -60,12 +68,7 @@ class Dropshipper(models.Model):
     is_accepted = models.BooleanField(default=False)
     agreed_to_policy = models.BooleanField(default=False)
 
-class Client (models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    agreed_to_policy = models.BooleanField(default=False)
 
-    def __str__(self):
-        return f"Client: {self.user.full_name}"
 
 
 

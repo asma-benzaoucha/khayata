@@ -1,6 +1,7 @@
 # models/promotions.py (ou dans commandes.py si tu n’as pas beaucoup de fichiers)
 
 from django.db import models
+from django.utils import timezone
 
 from django.contrib.auth import get_user_model
 
@@ -31,11 +32,10 @@ class PromoCode(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # def is_valid(self):
-    #     from datetime import date
-    #     today = date.today()
-    #     return self.state == 'active' and self.start_date <= today <= self.expiration_date
-
+    def is_valid(self):
+        today = timezone.now().date()
+        return self.start_date <= today <= self.expiration_date
+    
     def __str__(self):
         return self.code
 

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "../../style/shoppingStyle/ProductCard.css";
 import { useNavigate } from 'react-router-dom';
+import Popupimages from "../generalComponents/Popupimages"; // Assurez-vous que le chemin est correct
 
 // Icônes de flèche personnalisées
 const ArrowRight = () => (
@@ -18,9 +19,29 @@ const ArrowLeft = () => (
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showPopup, setShowPopup] = useState(false); // État pour contrôler l'affichage du popup
   
   const goToform = () => {
-    navigate("/shopping/acheter");
+    navigate("/shopping/acheter", {
+      state: {
+        product: {
+          ...product,
+          currentImage: product.images[currentImageIndex],
+          code: product.code,//ici procuct.code et product.variants sont deja recu à partir de ...product
+          variants: product.variants
+        }
+      }
+    });
+  };
+
+  // Fonction pour ouvrir le popup
+  const openImagePopup = () => {
+    setShowPopup(true);
+  };
+
+  // Fonction pour fermer le popup
+  const closeImagePopup = () => {
+    setShowPopup(false);
   };
 
   // Préparer les images - compatibilité ascendante
@@ -46,56 +67,65 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <div className="product-card">
-      <div className="product-img-wrapper">
-        <img 
-          src={images[currentImageIndex]} 
-          alt={product.title} 
-          className="product-img" 
-        />
+    <>
+      <div className="shopping-product-card">
+        <div className="shopping-product-img-container" onClick={openImagePopup}>
+          <img 
+            src={images[currentImageIndex]} 
+            alt={product.title} 
+            className="shopping-product-image" 
+          />
+          
+          {/* Afficher les boutons de navigation seulement s'il y a plusieurs images */}
+          {hasMultipleImages && (
+            <>
+              <button className="shopping-nav-btn shopping-prev-btn" onClick={prevImage}>
+                <ArrowLeft />
+              </button>
+              <button className="shopping-nav-btn shopping-next-btn" onClick={nextImage}>
+                <ArrowRight />
+              </button>
+              
+              {/* Indicateurs de position (points) */}
+              <div className="shopping-image-indicators">
+                {images.map((_, index) => (
+                  <span 
+                    key={index} 
+                    className={`shopping-indicator ${index === currentImageIndex ? 'shopping-indicator-active' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIndex(index);
+                    }}
+                  ></span>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
         
-        {/* Afficher les boutons de navigation seulement s'il y a plusieurs images */}
-        {hasMultipleImages && (
-          <>
-            <button className="nav-btn prev-btn" onClick={prevImage}>
-              <ArrowLeft />
-            </button>
-            <button className="nav-btn next-btn" onClick={nextImage}>
-              <ArrowRight />
-            </button>
-            
-            {/* Indicateurs de position (points) */}
-            <div className="image-indicators">
-              {images.map((_, index) => (
-                <span 
-                  key={index} 
-                  className={`indicator ${index === currentImageIndex ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentImageIndex(index);
-                  }}
-                ></span>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-      
-      <div className="product-header">
-        <h3 className="product-title">{product.title}</h3>
-        <p className="product-price">{product.price}</p>
+        <div className="shopping-product-header">
+          <h3 className="shopping-product-title">{product.title}</h3>
+          <p className="shopping-product-price">{product.price + " دج"}</p>
+        </div>
+
+        <p className="shopping-product-sizes">
+          <span>المقاسات:</span>
+          {product.sizes.map((size, idx) => (
+            <span key={idx} className="shopping-size-item">{size}</span>
+          ))}
+        </p>
+
+        <button className="shopping-buy-btn" onClick={goToform}>احصل عليه</button>
       </div>
 
-      <p className="mysizes">
-        <span>المقاسات:</span>
-        {product.sizes.map((size, idx) => (
-          <span key={idx} className="size">{size}</span>
-        ))}
-      </p>
-
-  <button className="buy-btn" onClick={goToform}>احصل عليه</button>
-
-    
-    </div>
+      {/* Afficher le popup lorsque showPopup est true */}
+      {showPopup && (
+        <Popupimages
+          images={images}
+          initialIndex={currentImageIndex}
+          onClose={closeImagePopup}
+        />
+      )}
+    </>
   );
 }

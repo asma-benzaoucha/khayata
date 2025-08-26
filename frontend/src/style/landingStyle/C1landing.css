@@ -55,7 +55,7 @@
 }
 @media (max-width: 768px) {
  .landing-title {
-  
+  margin-top: 20px;
 font-size: 44px;
 white-space: nowrap;
  }
@@ -66,7 +66,7 @@ white-space: nowrap;
 .landing-subtitle {
     font-size: 18px;
     color: #555;
-    margin-top: -8px;
+    margin-top: 18px;
     margin-bottom: 40px;
     font-weight: 500;
 }
@@ -139,7 +139,7 @@ white-space: nowrap;
 .scroll-down-wrapper {
     
     position: absolute;
-    bottom: 10px;
+    bottom: 20px;
     /* ou plus si tu veux plus d’espace */
     left: 50%;
     transform: translateX(-50%);
@@ -207,26 +207,6 @@ white-space: nowrap;
     width: 40px !important;
     height: 40px !important;
 }
-
-
-
-@media (max-width: 768px) {
-    
-.pub-circle {
-    margin-left: 5px;
-    width: 32px;
-    height: 32px;
-}
-.pubimage {
-    width: 32px !important;
-    height: 32px !important;
-}
-
-.scroll-down-wrapper {
-    left: 53%;
-}
-}
-/* Bordure externe animée "hire me" */
 .pub-circle::before {
     content: '';
     position: absolute;
@@ -253,4 +233,52 @@ white-space: nowrap;
         transform: scale(1);
         opacity: 1;
     }
+}
+
+
+
+
+@media (max-width: 768px) {
+    
+.pub-circle {
+    display: none;
+}
+
+
+.shop-button {
+margin-top: 20px;
+width:70%;
+height:50px;
+display: block;
+    /* Change de inline-block à block */
+    margin-left: auto;
+    /* Centre horizontalement */
+    margin-right: auto
+
+}
+.custom-button{
+margin-top: 10px;
+width: 70%;
+    height: 50px;
+    display: block;
+    /* Change de inline-block à block */
+    margin-left: auto;
+    /* Centre horizontalement */
+    margin-right: auto
+}
+
+ 
+}
+
+
+@media (max-width: 500px) {
+.scroll-down-wrapper {
+
+    position: absolute;
+    bottom: 20px;
+    /* ou plus si tu veux plus d’espace */
+    left: 53%;
+    transform: translateX(-50%);
+    z-index: 5;
+}
 }

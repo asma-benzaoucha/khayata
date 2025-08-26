@@ -3,7 +3,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate
 from .models import Couturiere, User ,Dropshipper ,UserDocuments
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
+from django.contrib.auth.password_validation import validate_password
 
 
 
@@ -266,3 +266,23 @@ class CouturiereSignupSerializer(serializers.ModelSerializer):
         
 
 
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        write_only=True, 
+        required=True,
+        style={'input_type': 'password'}
+    )
+    newPassword = serializers.CharField(
+        write_only=True, 
+        required=True,
+        validators=[validate_password],
+        style={'input_type': 'password'}
+    )
+
+    def validate_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("الرقم السري الحالي الذي أدخلته خاطئ ")
+        return value

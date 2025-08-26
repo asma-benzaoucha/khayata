@@ -7,7 +7,7 @@ import home from '../../assets/icons/home.png';
 import phone from '../../assets/icons/phone.jpg';
 import questions from '../../assets/icons/questions.png';
 import services from '../../assets/icons/services.jpg';
-
+import { useNavigate } from "react-router-dom";
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -18,6 +18,7 @@ export default function Navbar() {
         setMenuOpen(false);
       }
     };
+  
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -40,6 +41,7 @@ export default function Navbar() {
   const handleLinkClick = () => {
     setMenuOpen(false);
   };
+  const navigate = useNavigate();
 
   return (
     <>
@@ -54,10 +56,13 @@ export default function Navbar() {
           <span className="bar"></span>
         </div>
 
-        <div className="navbar-logo">
+        <div
+          className="navbar-logo"
+          onClick={() => navigate("/")}
+          style={{ cursor: "pointer" }}
+        >
           <img src={logo} alt="قاف" className="logo-img" />
         </div>
-
         <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
           <a href="#home" onClick={handleLinkClick}>
             <img src={home} alt="الرئيسية" className="icon" />

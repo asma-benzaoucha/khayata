@@ -1,0 +1,130 @@
+.sidebar {
+    width: 230px;
+    min-height: 100vh;
+    max-height: 100vh;
+    overflow-x: hidden;
+    background-color: #0d1b3d;
+    /* bleu foncé */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    direction: rtl;
+    /* pour que le texte soit aligné à droite */
+    font-family: "Cairo", sans-serif;
+    margin-left: 40px;
+}
+
+.sidebar-header {
+    text-align: center;
+    margin-bottom: 90px;
+    display: inline-block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.sidebar-logo {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.sidebar-menu {
+    
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-item {
+    
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-bottom: 20px;
+    
+}
+
+.sidebar-text{
+    color:white;
+    white-space: nowrap;
+}
+
+.sidebar-text.active{
+    color:#182544;
+}
+
+.sidebar-item.active {
+    background-color: white;
+    color: #182544;
+    border-radius: 8px;
+}
+
+.sidebar-item.active .sidebar-text {
+    font-weight: bold;
+}
+
+.sidebar-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.sidebar-text {
+    font-size: 15px;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    margin-left: 30px;
+}
+
+
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+
+.logout-icon {
+    width: 16px;
+    height: 16px;
+    
+}
+
+@media(max-width:1300px) {
+    .sidebar {
+    width: 300px;
+    height:100vh
+    }
+
+    .sidebar-header {
+     margin-bottom: 40px;
+    }
+.sidebar-item {
+
+
+    margin-bottom: 5px;
+
+}
+.sidebar-logo {
+    margin-top: 10px;
+    width: 90%;
+}
+
+.logout-btn {
+    
+    margin-top: 40px;
+}
+}

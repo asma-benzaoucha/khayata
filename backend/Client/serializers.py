@@ -1,4 +1,5 @@
 from rest_framework import serializers
+import json
 from Backendkadi.models.modeles import  FashionModel
 from Backendkadi.models.modeles import ModelImage
 from Backendkadi.models.stock import StockVariant
@@ -6,8 +7,15 @@ from Backendkadi.models.commandes import CustomOrder,CustomOrderImage,Order
 from Backendkadi.models.livraison import  WilayaDelivery
 from Backendkadi.models.user  import User,Client
 from django.contrib.auth import get_user_model
+from Backendkadi.models.socialAccountsLinkgroups import SocialAccountsLinkGroup
 User = get_user_model()
 
+
+class StockVariantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockVariant
+        fields = ['color','size','quantity']
+              
 class ModelImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ModelImage
@@ -17,91 +25,104 @@ class FashionModelSerializer(serializers.ModelSerializer):#with totalsales
     images = ModelImageSerializer(many=True, read_only=True, source='images.all')
     total_sales = serializers.SerializerMethodField()
     sizes = serializers.SerializerMethodField()
+    selection_type = serializers.SerializerMethodField()
 
     class Meta:
         model = FashionModel
-        fields = ['name', 'price_per_piece_for_client', 'images', 'total_sales', 'sizes']
+        fields = ['name', 'price_per_piece_for_client', 'images', 'total_sales', 'sizes','selection_type']
 
     def get_total_sales(self, obj):
         # Compter les commandes avec state='done' pour ce modèle
         return obj.orders.filter(state='done').count()
 
+
+    def get_selection_type(self, obj):
+        # Cette méthode sera appelée pour chaque objet sérialisé
+        # On utilise le contexte pour savoir si l'objet était dans les tops ou aléatoire
+        return self.context.get('selection_types', {}).get(obj.id, 'unknown')
+    
+    
     def get_sizes(self, obj):
         # Récupérer les tailles disponibles pour ce modèle
         return list(obj.variants.values_list('size', flat=True).distinct())
 
-
-
-class FashionModelSerializer2(serializers.ModelSerializer): #without total_sales
+class FashionModelSerializer2(serializers.ModelSerializer):
     images = ModelImageSerializer(many=True, read_only=True, source='images.all')
     sizes = serializers.SerializerMethodField()
+    colors = serializers.SerializerMethodField()
+    variants = StockVariantSerializer(many=True, read_only=True)  # Utilisation du sérialiseur dédié
     
     class Meta:
         model = FashionModel
-        fields = ['name', 'price_per_piece_for_client', 'images', 'sizes','description','code']
+        fields = ['name', 'price_per_piece_for_client', 'images', 'sizes', 'description', 'code', 'colors', 'variants']
     
     def get_sizes(self, obj):
-        # Récupère toutes les tailles disponibles pour ce modèle (uniques)
         variants = obj.variants.all()
         sizes = set(variant.size for variant in variants if variant.size)
         return list(sizes)
-
-
-
-
-
-
-
-
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'full_name', 'email']
-
-class StockVariantSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = StockVariant
-        fields = ['quantity']
-
-class ModelImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ModelImage
-        fields = ['image']
-
-class FashionModelSerializer(serializers.ModelSerializer):
-    images = ModelImageSerializer(many=True, read_only=True)
     
-    class Meta:
-        model = FashionModel
-        fields = ['name', 'price_per_piece_for_client', 'images']
+    def get_colors(self, obj):
+        variants = obj.variants.all()
+        colors = set(variant.color for variant in variants if variant.color)
+        return list(colors)
+    
 
+# serializers special pour la requete get client orders 
+# OrderImageSerializer deja en haut 
 class CustomOrderImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomOrderImage
         fields = ['image']
 
-class CustomOrderSerializer(serializers.ModelSerializer):
-    custom_images = CustomOrderImageSerializer(many=True, read_only=True)
-    command_details = StockVariantSerializer(many=True, read_only=True)
-    
-    class Meta:
-        model = CustomOrder
-        fields = ['id', 'created_at', 'numTelephone', 'state', 'nameorder', 
-                  'command_type', 'model_type',
-                 'deadline', 'description', 'custom_images', 'command_details']
-
 class OrderSerializer(serializers.ModelSerializer):
-    fashion_model = FashionModelSerializer(read_only=True)
-    standard_command_details = StockVariantSerializer(many=True, read_only=True)
-    
+    model_name = serializers.CharField(source='fashion_model.name', read_only=True)
+    images = serializers.SerializerMethodField()
+    variants = StockVariantSerializer(source='standard_command_details', many=True, read_only=True)
+    total_quantity = serializers.SerializerMethodField()
+    final_price = serializers.SerializerMethodField()
+
     class Meta:
         model = Order
-        fields = ['id', 'created_at', 'phone_number', 'state',
-                  'fashion_model', 'standard_command_details', ]
+        fields = [
+            'id', 'model_name', 'final_price', 'phone_number', 
+            'variants', 'total_quantity', 'state', 'created_at', 'images'
+        ]
 
+    def get_images(self, obj):
+        images = ModelImage.objects.filter(fashion_model=obj.fashion_model)
+        return ModelImageSerializer(images, many=True).data
 
+    def get_total_quantity(self, obj):
+        return sum(variant.quantity for variant in obj.standard_command_details.all())
+
+    def get_final_price(self, obj):
+        base_price = obj.fashion_model.price_per_piece_for_client
+        discount = (obj.promo_code.discount_percentage / 100) if obj.promo_code else 0
+        delivery_price = obj.wilaya.delivery_price if obj.wilaya else 0
+        
+        total_price = (base_price * (1 - discount)) + delivery_price
+        return round(total_price, 2)
+
+class CustomOrderSerializer(serializers.ModelSerializer):
+    images = serializers.SerializerMethodField()
+    variants = StockVariantSerializer(source='command_details', many=True, read_only=True)
+    total_quantity = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomOrder
+        fields = [
+            'id', 'nameorder', 'numTelephone', 'initial_price',
+            'variants', 'total_quantity', 'state', 'created_at', 'images'
+        ]
+
+    def get_images(self, obj): #normalement c'est récuperer directement depuis la relation inverse custum_images
+       # Utilisation de la relation inverse custom_images définie dans le modèle
+        return CustomOrderImageSerializer(obj.custom_images.all(), many=True).data
+
+    def get_total_quantity(self, obj):
+        return sum(variant.quantity for variant in obj.command_details.all())
+
+    
 
 
 
@@ -183,12 +204,111 @@ class ClientSignupSerializer(serializers.ModelSerializer):
             
             return client
 
-
-
-
-
-
 class WilayaDeliverySerializer(serializers.ModelSerializer):
     class Meta:
         model = WilayaDelivery
         fields = ['wilaya_name', 'delivery_price']
+        
+        
+
+
+
+
+
+
+
+# pour la requete post enregistrer une commande personalisé :
+
+class StockVariantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockVariant
+        fields = ['size', 'quantity']
+
+
+class CustomOrderSerializer2(serializers.ModelSerializer):
+    images = CustomOrderImageSerializer(many=True, required=False)
+    variants = serializers.CharField(write_only=True)
+    wilaya_name = serializers.CharField(write_only=True)
+    
+    class Meta:
+        model = CustomOrder
+        fields = [
+            'nameorder', 'description', 'deadline', 'numTelephone',
+            'wilaya', 'exactaddress', 'command_type', 'model_type',
+            'images', 'variants', 'wilaya_name'
+        ]
+        read_only_fields = ['wilaya']
+    
+    def validate_wilaya_name(self, value):
+        """
+        Valide que la wilaya existe et retourne l'instance WilayaDelivery
+        """
+        try:
+            # Recherche insensible à la casse et aux accents
+            wilaya = WilayaDelivery.objects.get(wilaya_name__iexact=value)
+            return wilaya
+        except WilayaDelivery.DoesNotExist:
+            raise serializers.ValidationError(f"Wilaya '{value}' non trouvée")
+    
+    def validate_variants(self, value):
+        try:
+            variants_data = json.loads(value)
+            for variant in variants_data:
+                if 'size' not in variant or 'quantity' not in variant:
+                    raise serializers.ValidationError("Chaque variant doit avoir size et quantity")
+                if variant['quantity'] <= 0:
+                    raise serializers.ValidationError("La quantité doit être positive")
+            return variants_data
+        except json.JSONDecodeError:
+            raise serializers.ValidationError("Format JSON invalide pour variants")
+    
+    def create(self, validated_data):
+        # Extraire les données
+        images_data = self.context['request'].FILES.getlist('images')
+        variants_data = validated_data.pop('variants', [])
+        wilaya_instance = validated_data.pop('wilaya_name')  # ← Déjà une instance WilayaDelivery
+        
+        # Créer la commande
+        order = CustomOrder.objects.create(
+            **validated_data,
+            wilaya=wilaya_instance,  # ← Instance correcte
+            user=self.context['request'].user
+        )
+        
+        # Créer les images
+        for image_file in images_data:
+            CustomOrderImage.objects.create(
+                fashion_model=order,
+                image=image_file
+            )
+        
+        # Créer les variants et les associer
+        for variant_data in variants_data:
+            variant, created = StockVariant.objects.get_or_create(
+                size=variant_data['size'],
+                defaults={'quantity': variant_data['quantity']}
+            )
+            if not created:
+                variant.quantity = variant_data['quantity']
+                variant.save()
+            order.command_details.add(variant)
+        
+        return order
+    
+    
+
+
+class SocialAccountsLinkGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SocialAccountsLinkGroup
+        fields = [
+            'id',
+            'whatsapp',
+            'instagram',
+            'facebook',
+            'group_dropshipping',
+            'group_investissement',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']

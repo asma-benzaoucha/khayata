@@ -47,7 +47,10 @@ export default function Navbarshop({ defaultSection = "#shop" }) {
       {/* Navbar Desktop et Tablette */}
       <div className="containershopping">
       <nav className="navbarshop desktop-navbar">
-        <div className="navbar-logo">
+        <div className="navbar-logo"  onClick={() => navigate("/")}
+          style={{ cursor: "pointer" }}
+
+        >
           <img src={logo} alt="قاف" className="logo-img" />
         </div>
         <div className="navbarshop-links">
@@ -86,7 +89,7 @@ export default function Navbarshop({ defaultSection = "#shop" }) {
         </div>
 
         <div className="bottom-nav">
-          <a href="#home" className={activeSection === "#home" ? "active" : ""}>
+          <a href="#home" className={activeSection === "#home" ? "active" : ""}onClick={goTolandingPage}>
             <img src={home} alt="الرئيسية" className="icon" /><span>الرئيسية</span>
           </a>
           <a href="#shop" className={activeSection === "#shop" ? "active" : ""}onClick={goToShop}>

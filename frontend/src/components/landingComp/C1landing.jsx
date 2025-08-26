@@ -1,50 +1,35 @@
 import '../../style/landingStyle/C1landing.css';
-import down from '../../assets/icons/down.png'
+import down from '../../assets/icons/down.png';
 import pub from "../../assets/icons/publ.png";
 import { useNavigate } from "react-router-dom";
+import { handleNavigationWithAuth } from "../../apimanagement/authUtils";
 
 export default function C1landing() {
   const navigate = useNavigate();
-  
-  // Fonction pour vérifier si un JWT est expiré
-  const isTokenExpired = (token) => {
-    if (!token) return true;
-    
+
+  const handleProtectedNavigation = async (path) => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const expirationTime = payload.exp * 1000; // Convertir en millisecondes
-      const currentTime = Date.now();
-      
-      return expirationTime <= currentTime;
+      await handleNavigationWithAuth(navigate, path, false);
     } catch (error) {
-      console.error('Erreur lors du décodage du token:', error);
-      return true; // En cas d'erreur, considérer comme expiré
+      console.error('Navigation error:', error);
     }
   };
   
   const goToShoppingOrLogin = () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    
-    // Si pas de refresh token ou token expiré, aller au login
-    if (!refreshToken || isTokenExpired(refreshToken)) {
-      navigate("/loginClient");
-    } else {
-      // Refresh token valide, aller directement au shopping
-      navigate("/shopping");
-    }
-  };
+    handleProtectedNavigation("/shopping");
+  }
   
   const goToSpecialOrLogin = () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    
-    // Si pas de refresh token ou token expiré, aller au login
-    if (!refreshToken || isTokenExpired(refreshToken)) {
-      navigate("/loginClient");
-    } else {
-      // Refresh token valide, aller directement à la page spéciale
-      navigate("/special");
-    }
-  };
+    handleProtectedNavigation("/special");
+  }
+
+  // Fonction pour faire défiler la page vers le bas
+  const scrollDown = () => {
+    window.scrollBy({
+      top: 500, // Défiler de 600px vers le bas
+      behavior: 'smooth' // Animation fluide
+    });
+  }
   
   return (
     <section className="landing-section" id="home">
@@ -65,8 +50,9 @@ export default function C1landing() {
         </div>
       </a>
       
-      <div className='scroll-down-wrapper'>
-        <img src={down} alt="إعلان" className='scroll-down-icon'/>
+      {/* Ajout de onClick pour le défilement */}
+      <div className='scroll-down-wrapper' onClick={scrollDown}>
+        <img src={down} alt="تمرير لأسفل" className='scroll-down-icon'/>
       </div>
     </section>
   );

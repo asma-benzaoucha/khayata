@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('Backendkadi.urls')), 
     path('clientapi/',include('Client.urls')), 
+    path('adminapi/',include('Admin.urls')),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
