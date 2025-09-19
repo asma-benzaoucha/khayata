@@ -18,7 +18,7 @@
 
     color: #374151;
     font-size: 18px;
-    margin-bottom: 50px;
+    margin-bottom: 15px;
 
 }
 
@@ -53,7 +53,7 @@
     align-items: center;
     justify-content: center;
     gap: 25px;
-  
+
 }
 
 .machine-card {
@@ -125,12 +125,33 @@
 
 @media(max-width:1180px){
 .Cardselements {
-        gap: 10px;
+        gap: 0px;
     }
-.machine-card {
-            width: 270px;
-            padding: 20px;
-            position: relative;
-            text-align: center;
+
+    .machine-card {
+        min-width: 260px !important;
+        padding: 20px;
+        position: relative;
+        text-align: center;
     }
+    .machine-content .value {
+        font-size: 16px;
+        color: #000;
+        margin: 0 10px;
+    }
+
+        .machine-content .title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #0d1b3d;
+        }
+
+                .arrow {
+                    width: 6px;
+                    cursor: pointer;
+                    margin-top: 2px;
+        
+                }
+               
 }

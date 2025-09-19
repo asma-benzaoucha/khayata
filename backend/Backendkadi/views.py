@@ -231,8 +231,11 @@ class ResetPasswordView(APIView):
         return Response({"detail": "تم إعادة تعيين كلمة المرور بنجاح."})
 
 
+
+#couturiere section
 class CouturiereSignupView(APIView):
     parser_classes = [MultiPartParser, FormParser]
+    
 
     def post(self, request):
         serializer = CouturiereSignupSerializer(data=request.data)

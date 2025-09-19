@@ -1,7 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import Popup from "../../components/generalComponents/Popup";
 import { useNavigate, useLocation } from 'react-router-dom';
-// Removed the unused import: handleNavigationWithAuth
 import api from "../../apimanagement/api";
 
 import Navbarshop from '../../components/shoppingComp/Navbarshop';
@@ -51,143 +51,12 @@ function FormAcheterPage() {
   // Référence pour le délai de validation du code promo
   const discountTimeoutRef = useRef(null);
   
-  // Calculer le total
-  const prixApresRemise = discountData?.valid 
-    ? prixProduit - (prixProduit * discountData.discount_percentage / 100)
-    : prixProduit;
-  
-  const total = prixApresRemise + prixLivraison;
-  
   // Extraire les variantes disponibles
   const variants = productData?.variants || [];
   
   // Extraire les couleurs et tailles disponibles depuis les variantes
   const availableSizes = [...new Set(variants.map(v => v.size))];
   const availableColors = [...new Set(variants.map(v => v.color))];
-
-  const [showPopup, setShowPopup] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
-  const [products, setProducts] = useState([{ 
-    id: Date.now(),
-    size: "",
-    color: "",
-    nbpieces: ""
-  }]);
-
-  const [form, setForm] = useState({
-    discountCode: "",
-    phone: "",
-    wilaya: "",
-    address: ""
-  });
-
-  const [errors, setErrors] = useState({});
-
-  // Fonction pour récupérer le prix de livraison
- const fetchDeliveryPrice = async (wilayaName) => {
-  if (!wilayaName) {
-    setPrixLivraison(null); // Changer de 0 à null
-    return;
-  }
-  
-  setIsLoadingDelivery(true);
-  try {
-    const response = await api.withAuth(true, true).get(
-      `/clientapi/delivery-price/?wilaya_name=${encodeURIComponent(wilayaName)}`
-    );
-    
-    const data = response.data;
-    setPrixLivraison(parseFloat(data.delivery_price));
-  } catch (error) {
-    console.error("Erreur lors de la récupération du prix de livraison:", error);
-    setPrixLivraison(500);
-  } finally {
-    setIsLoadingDelivery(false);
-  }
-};
-
-  // Fonction pour valider le code promo
-  const validateDiscountCode = async (code) => {
-    if (!code || code.trim() === "") {
-      setDiscountData(null);
-      setDiscountError("");
-      return;
-    }
-    
-    setIsValidatingCode(true);
-    setDiscountError("");
-    
-    try {
-      // ✅ Requête protégée - authentication requise (avec popup)
-      const response = await api.withAuth(true, true).get(
-        `/clientapi/validatecodepromo/${code}/${modelCode}`
-      );
-      
-      const data = response.data;
-      
-      if (data.valid) {
-        setDiscountData(data);
-        setDiscountError("");
-      } else {
-        setDiscountData(null);
-        setDiscountError(data.message || "كود الخصم غير صالح");
-      }
-    } catch (error) {
-      console.error("Erreur lors de la validation du code promo:", error);
-      setDiscountData(null);
-      
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        setDiscountError("تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
-      } else {
-        setDiscountError("حدث خطأ غير متوقع أثناء التحقق من الكود");
-      }
-    } finally {
-      setIsValidatingCode(false);
-    }
-  };
-
-  // Fonction pour soumettre la commande
-  const submitOrder = async () => {
-    setIsSubmitting(true);
-    setSubmitError("");
-    
-    // Préparer les données pour l'API
-    const orderData = {
-      phone_number: form.phone,
-      address: form.address,
-      model_code: modelCode,
-      wilaya_name: form.wilaya,
-      promo_code: form.discountCode.trim() !== "" ? form.discountCode : null,
-      variants: products.map(product => ({
-        size: product.size,
-        color: product.color,
-        quantity: parseInt(product.nbpieces) || 1
-      }))
-    };
-    
-    try {
-      // ✅ Requête protégée - authentication requise (avec popup)
-      const response = await api.withAuth(true, true).post(
-        '/clientapi/achetermodel/',
-        orderData
-      );
-      
-      const data = response.data;
-      
-      if (response.status === 201) {
-        // Commande créée avec succès
-        setShowPopup(true);
-      } else {
-        setSubmitError(data.message || "حدث خطأ أثناء إنشاء الطلب");
-      }
-    } catch (error) {
-      console.error("Erreur lors de la soumission de la commande:", error);
-      setSubmitError("خطأ في الاتصال أثناء إنشاء الطلب");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Fonction pour obtenir les couleurs disponibles pour une taille donnée
   const getAvailableColorsForSize = (size) => {
@@ -222,30 +91,186 @@ function FormAcheterPage() {
     return matchingVariants.reduce((total, variant) => total + variant.quantity, 0);
   };
 
+  const [showPopup, setShowPopup] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const [products, setProducts] = useState([{ 
+    id: Date.now(),
+    size: "",
+    color: "",
+    nbpieces: ""
+  }]);
+
+  const [form, setForm] = useState({
+    discountCode: "",
+    phone: "",
+    wilaya: "",
+    address: ""
+  });
+
+  const [errors, setErrors] = useState({});
+
+  // Calculer le total des quantités et le prix de base total
+  const totalQuantite = products.reduce((total, product) => {
+    return total + (parseInt(product.nbpieces) || 0);
+  }, 0);
+
+  const prixBaseTotal = prixProduit * totalQuantite;
+  
+  // Calculer le total après remise
+  const prixApresRemise = discountData?.valid 
+    ? prixBaseTotal - (prixBaseTotal * discountData.discount_percentage / 100)
+    : prixBaseTotal;
+  
+  const total = prixApresRemise + (prixLivraison || 0);
+
+  // Fonction pour récupérer le prix de livraison
+  const fetchDeliveryPrice = async (wilayaName) => {
+    if (!wilayaName) {
+      setPrixLivraison(null);
+      return;
+    }
+    
+    setIsLoadingDelivery(true);
+    try {
+      const response = await api.withAuth(true, true).get(
+        `/clientapi/delivery-price/?wilaya_name=${encodeURIComponent(wilayaName)}`
+      );
+      
+      const data = response.data;
+      setPrixLivraison(parseFloat(data.delivery_price));
+    } catch (error) {
+      console.error("Erreur lors de la récupération du prix de livraison:", error);
+      setPrixLivraison(500);
+    } finally {
+      setIsLoadingDelivery(false);
+    }
+  };
+
+  // Fonction pour valider le code promo
+  const validateDiscountCode = async (code) => {
+    if (!code || code.trim() === "") {
+      setDiscountData(null);
+      setDiscountError("");
+      return;
+    }
+    
+    setIsValidatingCode(true);
+    setDiscountError("");
+    
+    try {
+      const response = await api.withAuth(true, true).get(
+        `/clientapi/validatecodepromo/${code.trim()}/${modelCode}`
+      );
+      
+      const data = response.data;
+      
+      if (data.valid) {
+        setDiscountData(data);
+        setDiscountError("");
+      } else {
+        setDiscountData(null);
+        setDiscountError(data.message || "كود الخصم غير صالح");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la validation du code promo:", error);
+      setDiscountData(null);
+      
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        setDiscountError("تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+      } else {
+        setDiscountError("حدث خطأ غير متوقع أثناء التحقق من الكود");
+      }
+    } finally {
+      setIsValidatingCode(false);
+    }
+  };
+
   // Fonction pour valider la quantité
-  // Fonction pour valider la quantité
-const validateQuantity = (id, size, color, quantity) => {
-  if (!size || !color || !quantity) return "";
-  
-  const quantityNum = parseInt(quantity);
-  
-  // Vérifier si la quantité est négative ou nulle
-  if (quantityNum <= 0) {
-    return "عدد القطع يجب أن يكون أكبر من 0";
-  }
-  
-  const availableQty = getAvailableQuantity(size, color);
-  
-  if (availableQty === 0) {
-    return "هذه النسخة غير متوفرة حالياً";
-  }
-  
-  if (quantityNum > availableQty) {
-    return `الكمية المتاحة: ${availableQty} فقط`;
-  }
-  
-  return "";
-};
+  const validateQuantity = (id, size, color, quantity) => {
+    if (!size || !color || !quantity) return "";
+    
+    const quantityNum = parseInt(quantity);
+    
+    if (quantityNum <= 0) {
+      return "عدد القطع يجب أن يكون أكبر من 0";
+    }
+    
+    const availableQty = getAvailableQuantity(size, color);
+    
+    if (availableQty === 0) {
+      return "هذه النسخة غير متوفرة حالياً";
+    }
+    
+    if (quantityNum > availableQty) {
+      return `الكمية المتاحة: ${availableQty} فقط`;
+    }
+    
+    return "";
+  };
+
+  // Fonction pour soumettre la commande
+  const submitOrder = async () => {
+    setIsSubmitting(true);
+    setSubmitError("");
+    
+    const orderData = {
+      phone_number: form.phone,
+      address: form.address,
+      model_code: modelCode,
+      wilaya_name: form.wilaya,
+      promo_code: form.discountCode.trim() !== "" ? form.discountCode.trim() : null,
+      variants: products.map(product => ({
+        size: product.size,
+        color: product.color,
+        quantity: parseInt(product.nbpieces) || 1
+      }))
+    };
+    
+    console.log("Données envoyées:", orderData);
+    
+    try {
+      const response = await api.withAuth(true, true).post(
+        '/clientapi/achetermodel/',
+        orderData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+      
+      const data = response.data;
+      
+      if (response.status === 201) {
+        setShowPopup(true);
+        setIsSubmitted(false);
+      } else {
+        setSubmitError(data.message || "حدث خطأ أثناء إنشاء الطلب");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la soumission de la commande:", error);
+      
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        
+        if (error.response.status === 500) {
+          setSubmitError("خطأ في الخادم الداخلي. يرجى المحاولة لاحقًا");
+        } else if (error.response.data && error.response.data.message) {
+          setSubmitError(error.response.data.message);
+        } else {
+          setSubmitError("خطأ في الاتصال أثناء إنشاء الطلب");
+        }
+      } else if (error.request) {
+        setSubmitError("لا يوجد اتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+      } else {
+        setSubmitError("حدث خطأ غير متوقع");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleAddLine = () => {
     setProducts([...products, { 
@@ -384,9 +409,8 @@ const validateQuantity = (id, size, color, quantity) => {
           newErrors[key] = "يرجى إدخال العنوان باللغة العربية";
         }
         else if (parseInt(value.nbpieces) <= 0) {
-      // Message spécifique pour la quantité négative ou nulle
-      newErrors[key] = "عدد القطع يجب أن يكون أكبر من 0";
-    }
+          newErrors[key] = "عدد القطع يجب أن يكون أكبر من 0";
+        }
       }
     });
 
@@ -475,7 +499,7 @@ const validateQuantity = (id, size, color, quantity) => {
                     <InputField 
                       titre="المقاس:" 
                       special={true}
-                       placeholderSpecial ="اختر"
+                      placeholderSpecial ="اختر"
                       type="text" 
                       name="size" 
                       size="quarter" 
@@ -550,8 +574,7 @@ const validateQuantity = (id, size, color, quantity) => {
                   </div>
                 );
               })}
-              
-              <div className="field-wrapper">
+           <div className="field-wrapper">
                 <InputField
                   titre="كود الخصم(إختياري):"
                   placeholder="إذا حصلت عليه من طرف مروج الموديل"
@@ -572,7 +595,6 @@ const validateQuantity = (id, size, color, quantity) => {
                 {discountData?.valid && (
                   <p className="success">
                     تم تطبيق الخصم بنجاح: {discountData.discount_percentage}%
-                   
                   </p>
                 )}
               </div>
@@ -626,9 +648,9 @@ const validateQuantity = (id, size, color, quantity) => {
               
               <section className="price-summary">
                 <div className="price-row">
-                  <span>السعر الأساسي:</span>
+                  <span>السعر الأساسي ({totalQuantite} قطعة):</span>
                   <span className={discountData?.valid ? "original-price" : ""}>
-                    {prixProduit} دج
+                    {prixBaseTotal} دج
                   </span>
                 </div>
                 
@@ -640,16 +662,17 @@ const validateQuantity = (id, size, color, quantity) => {
                 )}
                 
                 <div className="price-row">
-  <span>سعر التوصيل:</span>
-  <span>
-    {isLoadingDelivery 
-      ? "جاري التحميل..." 
-      : prixLivraison === null 
-        ? "--" 
-        : `${prixLivraison} دج`
-    }
-  </span>
-</div>
+                  <span>سعر التوصيل:</span>
+                  <span>
+                    {isLoadingDelivery 
+                      ? "جاري التحميل..." 
+                      : prixLivraison === null 
+                        ? "--" 
+                        : `${prixLivraison} دج`
+                    }
+                  </span>
+                </div>
+                
                 <div className="price-row total">
                   <span style={{ color: "#22C55E" }}>المجموع:</span>
                   <span style={{ color: "#22C55E" }}>{total} دج</span>
@@ -683,13 +706,20 @@ const validateQuantity = (id, size, color, quantity) => {
                     title="تم استلام طلبيتك "
                     iconPopup={donepopup}
                     contenu="سنتواصل معك قريبا عبر مكالمة هاتفية أو عبر الواتساب لتأكيد عملية التوصيل. "
-                    buttonTexte="حسنا"
+                    buttons={[
+      {
+        text: "حسنا",
+        navigateTo: "/mycommands", // ← Utilise navigateTo au lieu de onConfirm
+        backgroundColor: "#22C55E",
+        textColor: "#FFFFFF"
+      }
+    ]}
                     onClose={() => setShowPopup(false)}
                     onConfirm={() => {
-                      setTimeout(() => {
+                      
                         setShowPopup(false);
-                        navigate('/shopping');
-                      }, 400);
+                    
+                      
                     }}
                   />
                 )}

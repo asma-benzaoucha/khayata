@@ -5,7 +5,7 @@ import lockIcon from '../../assets/icons/lock.png';
 import "../../style/compteStyle/ChangePassword.css";
 import api from '../../apimanagement/api';
 
-export default function ChangePassword() {
+export default function ChangePassword({path="", align = "center"} ) {
   const [form, setForm] = useState({
     current: '',
     newPass: '',
@@ -23,15 +23,24 @@ export default function ChangePassword() {
   const [showToast, setShowToast] = useState(false);
   const [apiError, setApiError] = useState("");
 
-  const handleInputChange = (name, value) => {
-    setForm(prev => ({ ...prev, [name]: value }));
-    // Clear errors when user types
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-    if (apiError) setApiError("");
+  const getContainerClass = () => {
+    const baseClass = "containerchangepassword";
+    return `${baseClass} ${baseClass}--${align}`;
   };
 
+  // Vérifier si tous les champs sont remplis
+  const areAllFieldsFilled = () => {
+    return form.current.trim() !== '' && 
+           form.newPass.trim() !== '' && 
+           form.confirm.trim() !== '';
+  };
+
+  // Vérifier si au moins un champ a été modifié
+  const hasFormData = () => {
+    return form.current.trim() !== '' || form.newPass.trim() !== '' || form.confirm.trim() !== '';
+  };
+
+  // Vérifier si le formulaire est valide
   const isFormValid = () => {
     let valid = true;
     let newErrors = {
@@ -64,10 +73,31 @@ export default function ChangePassword() {
     return valid;
   };
 
+  const handleInputChange = (name, value) => {
+    setForm(prev => ({ ...prev, [name]: value }));
+    // Clear errors when user types
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    if (apiError) setApiError("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitted(true);
     setApiError("");
+
+    // Vérifier si tous les champs sont remplis
+    if (!areAllFieldsFilled()) {
+      setErrors({
+        current: !form.current ? 'يرجى إدخال كلمة المرور الحالية' : '',
+        newPass: !form.newPass ? 'يرجى إدخال كلمة المرور الجديدة' : '',
+        confirm: !form.confirm ? 'يرجى تأكيد كلمة المرور الجديدة' : ''
+      });
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      return;
+    }
 
     if (!isFormValid()) {
       setShake(true);
@@ -81,7 +111,7 @@ export default function ChangePassword() {
       // Vérifier d'abord si nous avons un refresh token
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
-        window.location.href = '/loginClient';
+        window.location.href = path;
         setLoading(false);
         return;
       }
@@ -129,6 +159,27 @@ export default function ChangePassword() {
     }
   };
 
+  // Déterminer la classe du bouton en fonction de l'état
+  const getButtonClass = () => {
+    let className = "btn-confirmcompte";
+    
+    if (loading) {
+      className += " loading";
+    } else if (!areAllFieldsFilled()) {
+      className += " disabled";
+    } else if (isSubmitted && !isFormValid()) {
+      className += " invalid";
+    } else {
+      className += " valid";
+    }
+    
+    if (shake) {
+      className += " shake";
+    }
+    
+    return className;
+  };
+
   return (
     <>
       <Toast
@@ -141,7 +192,7 @@ export default function ChangePassword() {
         position="bottom-right"
       />
 
-      <section className="containerchangepassword">
+      <section className={getContainerClass()}>
         <div className="field-wrapper">
           <section className="nameheader">
             <img src={lockIcon} alt="lock" className="compte-icon" />
@@ -198,9 +249,9 @@ export default function ChangePassword() {
         <div className="button-group">
           <button
             type="submit"
-            className={`btn-confirmcompte ${shake ? "shake" : ""}`}
+            className={getButtonClass()}
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !areAllFieldsFilled()}
           >
             {loading ? "جاري التحديث..." : "تحديث كلمة المرور"}
           </button>

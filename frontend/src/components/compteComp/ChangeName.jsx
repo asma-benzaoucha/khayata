@@ -1,12 +1,13 @@
-import React, { useState, useEffect ,  } from 'react';
+import React, { useState, useEffect } from 'react';
 import InputField from "../generalComponents/Inputfield";
 import Toast from "../generalComponents/Toast";
 import compte from '../../assets/icons/compte.png';
 import styloIcon from '../../assets/icons/styloIcon.png'; 
 import "../../style/compteStyle/Changename.css"
-import api from '../../apimanagement/api'; // Import de l'API personnalisée
+import api from '../../apimanagement/api';
 
-export default function ChangeName() {
+// Correction : utiliser la destructuration pour les props
+export default function ChangeName({ path = "/loginClient", align = "center" }) {
   const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
   const [initialNom, setInitialNom] = useState("");
@@ -17,18 +18,21 @@ export default function ChangeName() {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
 
+  const getContainerClass = () => {
+    const baseClass = "containerchangename"; // Correction : utiliser le bon nom de classe
+    return `${baseClass} ${baseClass}--${align}`;
+  };
+
   // Fonction pour récupérer les données de l'utilisateur
   const fetchUserData = async () => {
     try {
-      // Vérifier d'abord si nous avons un refresh token
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
         setFetchLoading(false);
-        window.location.href = '/loginClient';
+        window.location.href = path; // Utiliser le path passé en prop
         return;
       }
       
-      // Utilisation de l'API personnalisée avec authentification
       const response = await api.withAuth(true, true).get('/api/nameclient/');
       
       const data = response.data;
@@ -39,12 +43,10 @@ export default function ChangeName() {
     } catch (error) {
       console.error("Erreur lors de la récupération des données:", error);
       
-      // Les erreurs d'authentification sont gérées par l'intercepteur
       if (error.response?.status === 403) {
         setErrors("ليس لديك الصلاحية للوصول إلى هذه البيانات");
       } else if (!error.message?.includes('Authentication') && 
                  !error.message?.includes('refresh token')) {
-        // Afficher seulement les erreurs non liées à l'authentification
         setErrors("حدث خطأ في الاتصال بالخادم");
       }
     } finally {
@@ -89,15 +91,14 @@ export default function ChangeName() {
     setErrors("");
 
     try {
-      // Vérifier d'abord si nous avons un refresh token
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
-        window.location.href = '/loginClient';
+        setErrors("يرجى تسجيل الدخول أولاً");
         setLoading(false);
+        window.location.href = path;
         return;
       }
       
-      // Utilisation de l'API personnalisée avec authentification
       const response = await api.withAuth(true, true).post('/clientapi/changename/', {
         full_name: nom
       });
@@ -115,12 +116,10 @@ export default function ChangeName() {
     } catch (error) {
       console.error("Erreur lors de la mise à jour du nom:", error);
       
-      // Les erreurs d'authentification sont gérées par l'intercepteur
       if (error.response?.status === 403) {
         setErrors("ليس لديك الصلاحية لتعديل البيانات");
       } else if (!error.message?.includes('Authentication') && 
                  !error.message?.includes('refresh token')) {
-        // Afficher seulement les erreurs non liées à l'authentification
         setErrors("حدث خطأ في الاتصال بالخادم");
         setNom(initialNom);
       }
@@ -132,7 +131,7 @@ export default function ChangeName() {
   // Afficher un loader pendant le chargement des données
   if (fetchLoading) {
     return (
-      <section className="containerchangename">
+      <section className={getContainerClass()}> {/* Utiliser la classe dynamique */}
         <div className="field-wrapper">
           <section className="nameheader">
             <img src={compte} alt="compte" className="compte-icon" />
@@ -156,7 +155,7 @@ export default function ChangeName() {
         position="bottom-right"
       />
 
-      <section className="containerchangename">
+      <section className={getContainerClass()}> {/* Utiliser la classe dynamique */}
         <div className="field-wrapper">
           <section className="nameheader">
             <img src={compte} alt="compte" className="compte-icon" />

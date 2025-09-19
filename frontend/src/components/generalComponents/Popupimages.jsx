@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import "../../style/generalStyle/Popupimages.css";
 
-// Définition des nouvelles icônes ArrowLeft et ArrowRight
 const ArrowRight = () => (
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
     <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -18,14 +17,14 @@ const ArrowLeft = () => (
 const Popupimages = ({
   images = [],
   colorbackgroundTitleSousTitle = "rgba(255, 255, 255, 0.8)",
-  onClose
+  onClose,
+  initialIndex = 0  // Propriété ajoutée avec valeur par défaut
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex); // Utiliser initialIndex
   const [isMobile, setIsMobile] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState("next");
   const [isZoomed, setIsZoomed] = useState(false);
 
-  // Vérifier la taille de l'écran pour déterminer le mode d'affichage
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
     checkMobile();
@@ -33,7 +32,6 @@ const Popupimages = ({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Navigation entre les images avec effet de zoom
   const goToPrevious = () => {
     if (images.length <= 1) return;
     setTransitionDirection("prev");
@@ -60,7 +58,6 @@ const Popupimages = ({
     }, 150);
   };
 
-  // Navigation au clic sur un indicateur
   const goToImage = (index) => {
     if (images.length <= 1) return;
     setTransitionDirection(index > currentIndex ? "next" : "prev");
@@ -87,7 +84,6 @@ const Popupimages = ({
         </div>
 
         <div className="popup-content-wrapper">
-          {/* Icônes de navigation pour desktop - masquées si une seule image */}
           {!isMobile && images.length > 1 && (
             <>
               <button
@@ -107,7 +103,6 @@ const Popupimages = ({
           )}
 
           <div className="popup-content">
-            {/* Version Desktop - Affichage de l'image principale */}
             {!isMobile && (
               <div className="desktop-gallery">
                 <div className="image-wrapper main-image">
@@ -121,7 +116,6 @@ const Popupimages = ({
               </div>
             )}
 
-            {/* Version Mobile - Affichage d'une seule image */}
             {isMobile && (
               <div className="mobile-gallery">
                 <div className="mobile-image-wrapper">
@@ -132,7 +126,6 @@ const Popupimages = ({
                     key={currentIndex}
                   />
 
-                  {/* Icônes de navigation pour mobile */}
                   {images.length > 1 && (
                     <>
                       <div className="mobile-arrow left" onClick={goToPrevious}>
@@ -149,7 +142,6 @@ const Popupimages = ({
           </div>
         </div>
 
-        {/* Indicateurs de navigation - masqués si une seule image */}
         {images.length > 1 && (
           <div className="navigation-indicators">
             {images.map((_, index) => (

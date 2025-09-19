@@ -10,6 +10,7 @@ from rest_framework_simplejwt.views import (
 urlpatterns = [
     
     path('signup-couturiere/', CouturiereSignupView.as_view(), name='signup-couturiere'),
+    
     path('resend-verification/', ResendVerificationEmailView.as_view(), name='resend-verification'),
     path('verify-email/<str:uid>/<str:token>/', verify_email, name='verify_email'),
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),

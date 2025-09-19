@@ -11,9 +11,8 @@
 
 .CardContainer {
     border: rgb(147, 141, 141) solid 1px;
-    margin: 10px;
     border-radius: 16px;
-    padding: 15px 25px 15px 15px;
+    padding: 35px 25px 15px 15px !important;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -422,4 +421,88 @@
     .photocommand {
         margin-left: 40px;
     }
+}
+
+/* Styles pour la section des variantes */
+.variants-section {
+    margin-top: 15px;
+    padding: 10px;
+    border-top: 1px solid #eee;
+}
+
+.variants-table-container {
+    margin-top: 10px;
+    overflow-x: auto;
+    width: fit-content;
+    max-width: 100%;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+
+.variants-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.variants-table th,
+.variants-table td {
+    padding: 8px 12px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+.variants-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #333;
+}
+
+.variants-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Styles pour la section des fichiers PDF */
+.pdfFilesSection {
+    margin-top: 15px;
+    padding: 10px;
+    border-top: 1px solid #eee;
+}
+
+.pdfSectionTitle {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: #333;
+    font-weight: bold;
+}
+
+.pdfFilesList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pdfFileItem {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #fff;
+}
+
+.pdfFileItem:hover {
+    background-color: #f0f8ff;
+    border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pdfFileName {
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: 500;
 }

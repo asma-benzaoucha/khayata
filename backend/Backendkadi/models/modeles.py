@@ -1,7 +1,8 @@
 from django.db import models
-from .stock import StockVariant
 from .promo import PromoCode
-
+from django.contrib.auth import get_user_model
+import uuid
+User = get_user_model()
 TYPE_CHOICES = [
     ('femme', 'femme'),
     ('homme', 'homme'),
@@ -14,25 +15,40 @@ class FashionModel(models.Model):
         ('accepted', 'Accepted'),
         ('waiting', 'Waiting'),
         ('cancelled', 'Cancelled'),
+        ('notvisible','nonvisible')
     ]
-
+    owner = models.ForeignKey(         
+        User,
+        on_delete=models.CASCADE,
+        related_name='submitted_models',
+        limit_choices_to={'role': 'couturiere'},
+        null=True,  # Ajoutez ceci
+        blank=True, 
+    )
     name = models.CharField(max_length=255)
-    code = models.CharField(max_length=50, unique=True)
+    code = models.CharField(
+        max_length=50, 
+        unique=True, 
+        default=uuid.uuid4,  # Génère un UUID4 unique
+        editable=False
+    )
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     
-    price_per_piece_for_client = models.DecimalField(max_digits=10, decimal_places=2)
-    price_per_piece_for_dropshipper = models.DecimalField(max_digits=10, decimal_places=2)
+    price_per_piece_for_client = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    price_per_piece_for_dropshipper = models.DecimalField(max_digits=10, decimal_places=2,default=0)
     
     description = models.TextField()
-    min_pieces_for_dropshipper = models.PositiveIntegerField()
+    min_pieces_for_dropshipper = models.PositiveIntegerField(default=1)
 
-    variants = models.ManyToManyField(StockVariant, related_name='fashion_models')
-    #totalquantity=models.PositiveIntegerField(default=100000)
+    # variants = models.ManyToManyField(StockVariant, related_name='fashion_models')
+    # #totalquantity=models.PositiveIntegerField(default=100000)
     state = models.CharField(max_length=20, choices=STATE_CHOICES, default='waiting')
     promo_code = models.ForeignKey(PromoCode, on_delete=models.SET_NULL, blank=True, null=True, related_name='models')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
 
     def total_pieces(self):
         return sum(variant.quantity for variant in self.variants.all())
@@ -42,6 +58,9 @@ class FashionModel(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.code})"
+    
+    
+    
 
 
 class ModelImage(models.Model):

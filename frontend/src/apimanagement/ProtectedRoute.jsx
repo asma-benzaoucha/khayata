@@ -193,6 +193,10 @@ const ProtectedRoute = ({ children, requiredUserType = null }) => {
   if (!isAuthenticated) {
     // Déterminer le chemin de login
     let loginPath = '/login';
+    const userData = localStorage.getItem('user');
+    if (userData){
+     localStorage.removeItem('userData')
+    }
     
     // Utiliser le userType détecté ou le requiredUserType
     const targetUserType = userType || requiredUserType;
@@ -200,6 +204,8 @@ const ProtectedRoute = ({ children, requiredUserType = null }) => {
     
     if (targetUserType === 'admin') {
       loginPath = '/admin/login';
+      
+
     } else if (targetUserType === 'client') {
       loginPath = '/loginClient';
     } else if (targetUserType === 'couturiere') {

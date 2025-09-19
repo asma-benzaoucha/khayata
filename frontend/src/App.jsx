@@ -21,6 +21,20 @@ import Dashboard from "./pages/admin/Dashboard";
 import ProtectedRoute from "./apimanagement/ProtectedRoute.jsx";
 import TermsAndPolicy from "./pages/client/TermsAndPolicy";
 import Sidebaradmin from "./components/AdminComponents/Sidebaradmin.jsx";
+import ParametreSite from "./pages/admin/ParametreSite";
+import DropshipperCard from "./components/AdminComponents/DropshipperCard"
+import DemandeCard from "./components/AdminComponents/DemandeCard";
+import ContainerPagesAdmin from "./components/AdminComponents/ContainerPagesAdmin";
+import DropshipperPage from "./pages/admin/DropshipperPage";
+import AffiliatePage from "./pages/admin/AffiliatePage";
+import ModelPage from "./pages/admin/ModelPage";
+import DemandePage from "./pages/admin/DemandePage";
+import AddNewAffilier from "./components/AdminComponents/AddAffiliatePopup";
+import CouturierePage from "./pages/admin/CouturierePage";
+import AddAffiliatePopup from "./components/AdminComponents/AddAffiliatePopup";
+import Reworkwithaffiliate from "./pages/admin/Reworkwithaffiliate"
+
+
 
 
 export default function App() {
@@ -43,7 +57,7 @@ export default function App() {
         <Route path="/password-success" element={<PasswordSuccess />} />
         <Route path="/registration-success" element={<RegistrationSuccess />} />
         <Route path="/admin/login" element={<LoginAdmin />} />
-        <Route path="/testing" element={<Sidebaradmin />} />
+        <Route path="/testing" element={<DropshipperCard/>} />
         
         
         {/* Routes protégées pour clients */}
@@ -76,12 +90,88 @@ export default function App() {
           </ProtectedRoute>
         } />
         
+
+         <Route path="/admin/parametres" element={
+          <ProtectedRoute requiredUserType="admin">
+            <ParametreSite />
+          </ProtectedRoute>
+          
+        } />
+        <Route path="/admin/gestionAffiliates/AddNewAffilier" element={
+          <ProtectedRoute requiredUserType="admin">
+            <AddAffiliatePopup />
+          </ProtectedRoute>
+          
+        } />
+          <Route path="/admin/gestionAffiliates/Reworkwithaffiliate" element={
+          <ProtectedRoute requiredUserType="admin">
+            <Reworkwithaffiliate />
+          </ProtectedRoute>
+          
+        } />
+        
+           <Route path="/admin/livraison" element={
+          <ProtectedRoute requiredUserType="admin">
+            <ParametreSite />
+          </ProtectedRoute>
+          
+        } />
         {/* Routes protégées pour admin */}
         <Route path="/admin/dashboard" element={
           <ProtectedRoute requiredUserType="admin">
             <Dashboard />
           </ProtectedRoute>
+          
         } />
+
+        <Route path="/admin/gestiondropshippers" element={
+          <ProtectedRoute requiredUserType="admin">
+            <DropshipperPage />
+          </ProtectedRoute>
+          
+        } />
+        
+
+
+        <Route path="/admin/gestionAffiliates" element={
+          <ProtectedRoute requiredUserType="admin">
+            <AffiliatePage/>
+          </ProtectedRoute>
+          
+        } />
+
+
+        <Route path="/admin/gestionCouturieres" element={
+          <ProtectedRoute requiredUserType="admin">
+            <CouturierePage/>
+          </ProtectedRoute>
+          
+        } />
+         <Route path="/admin/gestionModels" element={
+          <ProtectedRoute requiredUserType="admin">
+            <ModelPage/>
+          </ProtectedRoute>
+          
+        } />
+
+         <Route path="/admin/gestinDemandes" element={
+          <ProtectedRoute requiredUserType="admin">
+            <DemandePage/>
+          </ProtectedRoute>
+          
+        } />
+        
+
+
+
+
+        
+          {/* Routes protégées pour admin */}
+       
+
+        
+
+       
         
         
         {/* Routes protégées pour couturières */}

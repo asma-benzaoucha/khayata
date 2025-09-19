@@ -106,19 +106,26 @@ export default function ProductSection() {
         // ✅ Requête publique - pas d'authentification nécessaire
         const response = await api.withAuth(false).get("/clientapi/top-selling-models/");
         
-        const formatted = response.data.map((item, index) => ({
-          id: index,
-          title: item.name,
-          price: item.price_per_piece_for_client + " دج",
-          sizes: item.sizes || [],
-          images: item.images.map((img) => img.image),
-          selectionType: item.selection_type, // Conserver le type de sélection
-          isTopSeller: item.selection_type === "top" // Ajouter un flag pour les tops
-        }));
-        
-        setProducts(formatted);
+        // Vérifier si la réponse contient des données
+        if (response.data && response.data.length > 0) {
+          const formatted = response.data.map((item, index) => ({
+            id: index,
+            title: item.name,
+            price: item.price_per_piece_for_client + " دج",
+            sizes: item.sizes || [],
+            images: item.images.map((img) => img.image),
+            selectionType: item.selection_type, // Conserver le type de sélection
+            isTopSeller: item.selection_type === "top" // Ajouter un flag pour les tops
+          }));
+          
+          setProducts(formatted);
+        } else {
+          // Si pas de données, on garde products comme tableau vide
+          setProducts([]);
+        }
       } catch (error) {
         console.error("Erreur API:", error);
+        setProducts([]); // En cas d'erreur, on vide aussi les produits
       } finally {
         setLoading(false);
       }
@@ -135,6 +142,11 @@ export default function ProductSection() {
         </div>
       </section>
     );
+  }
+
+  // Si le chargement est terminé mais il n'y a pas de produits
+  if (!loading && products.length === 0) {
+    return null; // Ne rien afficher
   }
 
   return (

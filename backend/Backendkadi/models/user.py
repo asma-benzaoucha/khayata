@@ -51,22 +51,30 @@ class Client (models.Model):
     def __str__(self):
         return f"Client: {self.user.full_name}"
 
+class Affiliate(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    
 
+    
 class Couturiere(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     address = models.TextField()
-    phone_number = models.CharField(max_length=20, blank=False, null=False)# badlt raj3tha false
- # blank=True → signifie "peut être laissé vide dans les formulaires".
-# null=True → signifie "peut être NULL dans la base de données".   
-    is_accepted = models.BooleanField(default=False)
+    phone_number = models.CharField(max_length=20, blank=False, null=False)  
+    is_accepted = models.BooleanField(null=True,blank=True)
     agreed_to_policy = models.BooleanField(default=False)
+    refused_at = models.DateTimeField(null=True, blank=True)
+
 
 class Dropshipper(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     store_link = models.TextField()
-    phone_number = models.CharField(max_length=20, blank=False, null=False)# badlt raj3tha false
-    is_accepted = models.BooleanField(default=False)
+    phone_number = models.CharField(max_length=20, blank=False, null=False)# 
+    is_accepted = models.BooleanField(blank=True, null=True)
     agreed_to_policy = models.BooleanField(default=False)
+    refused_at = models.DateTimeField(null=True, blank=True)
+
+    
 
 
 

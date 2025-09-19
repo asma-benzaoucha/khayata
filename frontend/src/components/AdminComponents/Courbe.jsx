@@ -1,27 +1,102 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceArea, ResponsiveContainer } from "recharts";
+import { useNavigate } from "react-router-dom";
 
 const Courbe = () => {
-  const data = [
-    { jour: 1, ventes: 120 },
-    { jour: 2, ventes: 200 },
-    { jour: 3, ventes: 150 },
-    { jour: 4, ventes: 300 },
-    { jour: 5, ventes: 250 },
-    { jour: 6, ventes: 180 },
-    { jour: 7, ventes: 220 },
-    { jour: 8, ventes: 120 },
-    { jour: 9, ventes: 200 },
-    { jour: 10, ventes: 150 },
-    { jour: 11, ventes: 300 },
-    { jour: 12, ventes: 250 },
-    { jour: 13, ventes: 180 },
-    { jour: 14, ventes: 220 },
-    { jour: 15, ventes: 220 },
-  ];
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const accessToken = localStorage.getItem("accessToken");
+        
+        if (!accessToken) {
+          navigate("/admin/login");
+          return;
+        }
+
+        const response = await fetch(
+          "http://127.0.0.1:8000/adminapi/gettotalbenificefromsalingproductspersonlaised&standardinmonth",
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (response.status === 401) {
+          navigate("/admin/login");
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error("Erreur lors de la récupération des données");
+        }
+
+        const result = await response.json();
+        
+        // Transformer les données de l'API pour les adapter au graphique
+        const formattedData = Object.entries(result.daily_benefits).map(([date, benefits]) => ({
+          date: date, // Format: "YYYY-MM-DD"
+          total_benefit: benefits.total_benefit,
+        }));
+        
+        setData(formattedData);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div style={{ 
+        direction: "rtl", 
+        textAlign: "center",
+        padding: "20px",
+        borderRadius: "12px",
+        width: "100%",
+        maxWidth: "1000px",
+        margin: "0 auto",
+        marginBottom: "30px"
+      }}>
+        <h2 style={{ color: "#374151", marginBottom: "10px" }}>
+          تطور الأرباح خلال 30 يوم
+        </h2>
+        <p>جاري تحميل البيانات...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ 
+        direction: "rtl", 
+        textAlign: "center",
+        padding: "20px",
+        borderRadius: "12px",
+        width: "100%",
+        maxWidth: "1000px",
+        margin: "0 auto",
+        marginBottom: "30px"
+      }}>
+        <h2 style={{ color: "#374151", marginBottom: "10px" }}>
+          تطور الأرباح خلال 30 يوم
+        </h2>
+        <p style={{ color: "red" }}>خطأ: {error}</p>
+      </div>
+    );
+  }
 
   // Trouver la valeur maximale pour ajuster dynamiquement l'échelle Y
-  const maxVentes = Math.max(...data.map(item => item.ventes));
+  const maxBenefit = Math.max(...data.map(item => item.total_benefit));
 
   return (
     <div style={{ 
@@ -35,7 +110,7 @@ const Courbe = () => {
       marginBottom: "30px"
     }}>
       <h2 style={{ color: "#374151", marginBottom: "10px" }}>
-        تطور المبيعات خلال 15 يوم
+        تطور الأرباح خلال 30 يوم
       </h2>
 
       <div style={{ width: '100%', height: '350px' }}>
@@ -46,8 +121,10 @@ const Courbe = () => {
           >
             {/* ✅ Zone colorée à l'intérieur du graphique */}
             <ReferenceArea
-              x1={1} x2={15}   // couvre tout l'axe X
-              y1={0} y2={maxVentes * 1.1} // ajusté dynamiquement
+              x1={data[0]?.date} 
+              x2={data[data.length - 1]?.date}   // couvre tout l'axe X
+              y1={0} 
+              y2={maxBenefit * 1.1} // ajusté dynamiquement
               fill="#FAF3DD"
               fillOpacity={1}
             />
@@ -55,11 +132,11 @@ const Courbe = () => {
             <CartesianGrid strokeDasharray="3 3" />
 
             <XAxis
-              dataKey="jour"
+              dataKey="date"
               tick={{ fill: "#101011ff" }}
               tickMargin={10}
               label={{ 
-                value:"الايام", 
+                value:"التاريخ", 
                 position: "insideBottomRight",
                 dy: 25, 
                 fill: "#111827",
@@ -68,12 +145,12 @@ const Courbe = () => {
             />
 
             <YAxis
-              domain={[0, maxVentes * 1.1]} // Ajustement dynamique avec marge
+              domain={[0, maxBenefit * 1.1]} // Ajustement dynamique avec marge
               tick={{ fill: "#101011ff" }}
               tickMargin={15}
               tickLine={false}
               label={{ 
-                value: "إجمالي المبيعات", 
+                value: "إجمالي الأرباح", 
                 angle: -90, 
                 position: "insideTopLeft", 
                 dx: -10,
@@ -84,8 +161,8 @@ const Courbe = () => {
             />
 
             <Tooltip
-              formatter={(value) => [`${value} مبيعات`, "المبيعات"]}
-              labelFormatter={(label) => `اليوم ${label}`}
+              formatter={(value) => [`${value} د.ج`, "الأرباح"]}
+              labelFormatter={(label) => `التاريخ: ${label}`}
               contentStyle={{ 
                 borderRadius: "8px",
                 textAlign: "right",
@@ -95,11 +172,11 @@ const Courbe = () => {
 
             <Line 
               type="monotone" 
-              dataKey="ventes" 
+              dataKey="total_benefit" 
               stroke="#E5B62B" 
               strokeWidth={2} 
-              
-              
+              dot={{ r: 4 }}
+              activeDot={{ r: 6 }}
             />
           </LineChart>
         </ResponsiveContainer>

@@ -205,52 +205,79 @@ function ModelSpecialPage() {
   return Object.keys(newErrors).length === 0;
 };
   // Fonction pour envoyer les données à l'API
-  const submitOrder = async () => {
-    setIsLoading(true);
+ const submitOrder = async () => {
+  setIsLoading(true);
+  
+  try {
+    const formData = new FormData();
     
-    try {
-      // Préparer les données pour l'API
-      const formData = new FormData();
-      
-      // Ajouter les champs texte
-      formData.append('nameorder', form.nameorder);
-      formData.append('description', form.description);
-      formData.append('deadline', form.deadline);
-      formData.append('numTelephone', form.phone);
-      formData.append('wilaya_name', form.wilaya);
-      formData.append('exactaddress', form.address);
-      formData.append('command_type', 'personalized');
-      
-      // Ajouter les variants (tailles et quantités)
-      const variants = products.map(product => ({
-        size: product.size,
-        quantity: parseInt(product.quantity)
-      }));
-      formData.append('variants', JSON.stringify(variants));
-      
-      // Ajouter les images
-      form.images.forEach((image, index) => {
-        formData.append('images', image);
-      });
-      
-      // Envoyer la requête à l'API
-      const response = await api.withAuth(true, true).post('/clientapi/specialcommand/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      // Gérer la réponse réussie
-      console.log('Commande créée avec succès:', response.data);
-      setShowPopup(true);
-      
-    } catch (error) {
-      console.error('Erreur lors de la création de la commande:', error);
-      alert("Une erreur s'est produite lors de l'envoi de votre commande. Veuillez réessayer.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // Ajouter les champs texte
+    formData.append('nameorder', form.nameorder);
+    formData.append('description', form.description);
+    formData.append('deadline', form.deadline);
+    formData.append('numTelephone', form.phone);
+    formData.append('wilaya_name', form.wilaya);
+    formData.append('exactaddress', form.address);
+    formData.append('command_type', 'personalized');
+    
+    // Ajouter les variants (tailles et quantités)
+    const variants = products.map(product => ({
+      size: product.size,
+      quantity: parseInt(product.quantity)
+    }));
+    formData.append('variants', JSON.stringify(variants));
+
+    // Ajouter les images
+    form.images.forEach((image, index) => {
+      formData.append('images', image);
+    });
+    
+    // Afficher le contenu de FormData
+    console.log("=== DONNÉES ENVOYÉES À L'API ===");
+    
+    // Afficher les champs texte
+    console.log("nameorder:", form.nameorder);
+    console.log("description:", form.description);
+    console.log("deadline:", form.deadline);
+    console.log("numTelephone:", form.phone);
+    console.log("wilaya_name:", form.wilaya);
+    console.log("exactaddress:", form.address);
+    console.log("command_type:", "personalized");
+    console.log("variants:", variants);
+    
+    // Afficher les informations sur les fichiers
+    console.log("images:", form.images.map(file => ({
+      name: file.name,
+      type: file.type,
+      size: file.size
+    })));
+    
+    // Envoyer la requête à l'API
+    const response = await api.withAuth(true, true).post('/clientapi/specialcommand/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    console.log('Commande créée avec succès:', response.data);
+    setShowPopup(true);
+    
+  } catch (error) {
+  console.error('Erreur lors de la création de la commande:', error);
+  
+  // Afficher la réponse du serveur si disponible
+  if (error.response) {
+    console.error('Status:', error.response.status);
+    console.error('Data:', error.response.data);
+    console.error('Headers:', error.response.headers);
+  } else if (error.request) {
+    console.error('Request:', error.request);
+  }
+  
+  alert("Une erreur s'est produite lors de l'envoi de votre commande. Veuillez réessayer.");
+}
+ 
+};
 
   return (
     <>
@@ -464,21 +491,25 @@ function ModelSpecialPage() {
                 >
                   {isLoading ? 'جاري الإرسال...' : 'تأكيد الطلب'}
                 </button>
-                {showPopup && (
-                  <Popup
-                    title="تم استلام طلبيتك "
-                    iconPopup={donepopup}
-                    contenu="سنتواصل معك قريبا عير الهاتف أو الواتساب لمناقشة جميع التفاصيل و تحديد السعر المناسب .يرجى البقاء متاحا و شكرا ."
-                    buttonTexte="حسنا"
-                    onClose={() => setShowPopup(false)}
-                    onConfirm={() => {
-                      setTimeout(() => {
+               {showPopup && (
+  <Popup
+    title="تم استلام طلبيتك "
+    iconPopup={donepopup}
+    contenu="سنتواصل معك قريبا عير الهاتف أو الواتساب لمناقشة جميع التفاصيل و تحديد السعر المناسب .يرجى البقاء متاحا و شكرا ."
+    buttons={[
+      {
+        text: "حسنا",
+        navigateTo: "/mycommands", // ← Utilise navigateTo au lieu de onConfirm
+        backgroundColor: "#22C55E",
+        textColor: "#FFFFFF"
+      }
+    ]}
+    onClose={() => setShowPopup(false)}
+     onConfirm={() => {
                         setShowPopup(false);
-                        navigate('/shopping');
-                      }, 400);
                     }}
-                  />
-                )}
+  />
+)}
               </div>
             </form>
           </div>

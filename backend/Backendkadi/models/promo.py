@@ -27,7 +27,6 @@ class PromoCode(models.Model):
     expiration_date = models.DateField()
 
 
-    usage_count = models.PositiveIntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

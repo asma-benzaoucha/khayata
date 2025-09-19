@@ -2,9 +2,37 @@
 .containerchangename {
     padding: 32px;
     max-width: 400px;
-    margin: auto;
     direction: rtl;
     font-family: 'Cairo', sans-serif;
+}
+
+/* Alignement par défaut (center) - AJOUTER CE STYLE */
+.containerchangename--center {
+    margin: auto;
+}
+
+/* Alignement au début */
+.containerchangename--start {
+    margin-right: 0;
+    margin-left: auto;
+}
+
+/* Alignement à la fin */
+.containerchangename--end {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+/* Alignement à gauche */
+.containerchangename--left {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+/* Alignement à droite */
+.containerchangename--right {
+    margin-right: 0;
+    margin-left: auto;
 }
 
 .nameheader {
@@ -28,22 +56,31 @@
 }
 
 .btn-confirmcompte {
-    width: 50%;
-    background-color: #e0b437;
+    width: 100%;
+    background-color: #22C55E;
     border: none;
     color: white;
     font-size: 16px;
     padding: 8px 0px;
     border-radius: 16px;
     cursor: pointer;
-    float: left;
     transition: background-color 0.3s ease;
     font-family: 'Cairo';
     font-weight: 600;
 }
 
-.btn-confirmcompte:hover {
-    background-color: #e0b437;
+.btn-confirmcompte:hover:not(.disabled) {
+    background-color: #22C55E;
+}
+
+.btn-confirmcompte.disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
+.btn-confirmcompte.disabled:hover {
+    background-color: #bdc3c7;
+    transform: none;
 }
 
 .error {
@@ -95,16 +132,6 @@ input[type="text"] {
     font-family: 'Cairo', sans-serif;
 }
 
-.btn-confirmcompte.disabled {
-    
-    cursor: not-allowed;
-}
-
-.btn-confirmcompte.disabled:hover {
-    background-color: #e0b437;
-    transform: none;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
     .containerchangename {
@@ -122,7 +149,6 @@ input[type="text"] {
     }
 
     .btn-confirmcompte {
-        width: 60%;
         font-size: 15px;
         padding: 10px 0;
     }
@@ -137,7 +163,6 @@ input[type="text"] {
 
 @media (max-width: 480px) {
     .btn-confirmcompte {
-        width: 70%;
         font-size: 14px;
     }
 
@@ -145,3 +170,13 @@ input[type="text"] {
         padding: 20px 16px;
     }
 }
+
+/* SUPPRIMER ces styles car ils utilisent le mauvais nom de classe */
+/*
+.containerchangepassword--start,
+.containerchangepassword--end,
+.containerchangepassword--left,
+.containerchangepassword--right {
+    // Supprimer ces styles
+}
+*/

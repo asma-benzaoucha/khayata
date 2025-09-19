@@ -4,7 +4,6 @@ import { TbBoxOff } from "react-icons/tb";
 import photo from '../../assets/icons/photo.png';
 import imageaffichage from '../../assets/icons/two.png';
 import date from '../../assets/icons/date.png';
-import commande from '../../assets/icons/commande.png';
 import price from '../../assets/icons/price.png';
 import telephone from '../../assets/icons/whatsapp.png';
 import refuse from '../../assets/icons/refuse.png';
@@ -56,31 +55,50 @@ function Talabiyati() {
     fetchCommandes();
   }, []);
 
-  const transformApiData = (apiData) => {
-    const transformedCommandes = [];
-    const API_BASE_URL = "http://127.0.0.1:8000";
+ const transformApiData = (apiData) => {
+  const transformedCommandes = [];
+  const API_BASE_URL = "http://127.0.0.1:8000";
 
-    // Traiter les commandes standard
+  // Traiter les commandes standard
   if (apiData.standard_orders && apiData.standard_orders.length > 0) {
     apiData.standard_orders.forEach(order => {
-      // Calculer la quantité totale
-      const totalQuantity = order.variants 
-        ? order.variants.reduce((sum, variant) => sum + (variant.quantity || 0), 0)
-        : 0;
+      // Séparer les images des PDFs
+      const images = [];
+      const pdfFiles = [];
+      
+      if (order.images && order.images.length > 0) {
+        order.images.forEach(img => {
+          const imageUrl = `${API_BASE_URL}${img.image}`;
+          if (imageUrl.toLowerCase().endsWith('.pdf')) {
+            pdfFiles.push({
+              name: imageUrl.split('/').pop(),
+              url: imageUrl
+            });
+          } else {
+            images.push(imageUrl);
+          }
+        });
+      }
+      
+      // Préparer les variantes pour l'affichage tabulaire
+      const variants = order.variants || [];
+      
+      // CALCULER LE PRIX TOTAL: final_price * total_quantity
+      const totalPrice = order.final_price * order.total_quantity +order.pricewilaya;
       
       transformedCommandes.push({
-        id: `standard_${order.id}`, // Ajouter un préfixe pour rendre la clé unique
+        id: `standard_${order.id}`,
         namecommand: order.model_name || "طلبية قياسية",
         photobutton: ["عرض الصور", photo],
         date: [order.created_at.split('T')[0], date],
         telephone: [order.phone_number, telephone],
-        prix: [`${order.final_price || 0}دج`, price],
-        nbpieces: [`${totalQuantity} قطعة`, commande],
+        prix: [`${totalPrice || 0}دج`, price], // Utiliser totalPrice au lieu de final_price
+        total_quantity: order.total_quantity, // Ajouter la quantité totale si nécessaire
         status: getStatus(order.state),
-        selectedImages: order.images && order.images.length > 0
-          ? order.images.map(img => `${API_BASE_URL}${img.image}`)
-          : [imageaffichage],
-        isCustom: false // Ajouter un flag pour identifier les commandes personnalisées
+        selectedImages: images.length > 0 ? images : [imageaffichage],
+        pdfFiles: pdfFiles,
+        variants: variants,
+        isCustom: false
       });
     });
   }
@@ -88,28 +106,48 @@ function Talabiyati() {
   // Traiter les commandes personnalisées
   if (apiData.custom_orders && apiData.custom_orders.length > 0) {
     apiData.custom_orders.forEach(order => {
-      // Calculer la quantité totale
-      const totalQuantity = order.variants 
-        ? order.variants.reduce((sum, variant) => sum + (variant.quantity || 0), 0)
-        : 0;
+      // Séparer les images des PDFs
+      const images = [];
+      const pdfFiles = [];
       
-      // Pour les commandes personnalisées, on utilise initial_price
-      // Si initial_price est null, on passe null pour que CommandCard gère l'affichage
-      const customPrice = order.initial_price === null ? null : `${order.initial_price}دج`;
+      if (order.images && order.images.length > 0) {
+        order.images.forEach(img => {
+          const imageUrl = `${API_BASE_URL}${img.image}`;
+          if (imageUrl.toLowerCase().endsWith('.pdf')) {
+            pdfFiles.push({
+              name: imageUrl.split('/').pop(),
+              url: imageUrl
+            });
+          } else {
+            images.push(imageUrl);
+          }
+        });
+      }
+      
+      // Préparer les variantes pour l'affichage tabulaire
+      const variants = order.variants || [];
+      
+      // Pour les commandes personnalisées, vérifier si initial_price existe
+      let customPrice = null;
+      if (order.initial_price !== null) {
+        // Si total_quantity existe pour les commandes personnalisées, multiplier
+        const totalQuantity = order.total_quantity || 1;
+        customPrice = `${order.initial_price * totalQuantity +order.pricewilaya}دج`;
+      }
       
       transformedCommandes.push({
-        id: `custom_${order.id}`, // Ajouter un préfixe pour rendre la clé unique
+        id: `custom_${order.id}`,
         namecommand: order.nameorder || "طلبية مخصصة",
         photobutton: ["عرض الصور", photo],
         date: [order.created_at.split('T')[0], date],
         telephone: [order.numTelephone, telephone],
         prix: customPrice === null ? null : [customPrice, price],
-        nbpieces: [`${totalQuantity} قطعة`, commande],
+        total_quantity: order.total_quantity || 1, // Ajouter la quantité totale
         status: getStatus(order.state),
-        selectedImages: order.images && order.images.length > 0
-          ? order.images.map(img => `${API_BASE_URL}${img.image}`)
-          : [imageaffichage],
-        isCustom: true // Ajouter un flag pour identifier les commandes personnalisées
+        selectedImages: images.length > 0 ? images : [imageaffichage],
+        pdfFiles: pdfFiles,
+        variants: variants,
+        isCustom: true
       });
     });
   }
@@ -118,13 +156,23 @@ function Talabiyati() {
 };
 
   const getStatus = (state) => {
-    switch(state) {
+    // Normaliser le statut en minuscules pour éviter les problèmes de casse
+    const normalizedState = state ? state.toLowerCase() : '';
+    
+    switch(normalizedState) {
       case 'done':
+      case 'completed':
         return ["مكتملة", "#22C55E", ""];
       case 'cancelled':
+      case 'canceled':
         return ["ملغية", "#EF4444", refuse];
       case 'pending':
-        return ["قيد الانتظار", "#F59E0B", ""];
+      case 'waiting':
+        return ["في الانتظار", "rgb(23, 162, 184) ", ""];
+      case 'inprogress':
+      case 'in_progress':
+      case 'in progress':
+        return ["قيدالتنفيذ", "#F59E0B", ""];
       default:
         return [state || "غير معروف", "#9CA3AF", ""];
     }
@@ -212,7 +260,7 @@ function Talabiyati() {
   return (
     <>
       <Navbarshop />
-      <div className="containershop">
+      <div className="containershop" style={{marginBottom: "50px"}}>
         <div className="shop-wrapper">
           {commandes.length === 0 ? (
             <div className="cards-empty-container">
@@ -236,6 +284,8 @@ function Talabiyati() {
                 status={cmd.status}
                 selectedImages={cmd.selectedImages}
                 isCustom={cmd.isCustom}
+                pdfFiles={cmd.pdfFiles}
+                variants={cmd.variants}
               />
             ))
           )}

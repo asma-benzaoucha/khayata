@@ -23,7 +23,8 @@ from Backendkadi.models.modeles import  FashionModel
 from Backendkadi.models.commandes import CustomOrder,Order
 from Backendkadi.models.livraison import WilayaDelivery
 from Backendkadi.models.promo import PromoCode
-from Backendkadi.models.stock import StockVariant
+from Backendkadi.models.stock import StockVariantForCommands,StockVariantForFashionModels
+
 from Backendkadi.models.socialAccountsLinkgroups import SocialAccountsLinkGroup
 from Backendkadi.utils import send_verification_email
 
@@ -128,10 +129,9 @@ def client_signup(request):
 #get all models accepted from the store 
 class FashionModelListView(generics.ListAPIView):
     serializer_class = FashionModelSerializer2
-    queryset = FashionModel.objects.all()
+    queryset = FashionModel.objects.filter(state='accepted')
     
-    def get_queryset(self):
-        return FashionModel.objects.filter(state='accepted')
+    
     
     
 #get all women models accepted from the store 
@@ -310,11 +310,12 @@ def create_order(request):
     try:
         # Récupérer les données du body
         data = request.data
-        if request.user.role != 'client' and request.user.role != 'dropshipper' :
-          return Response(
-            {"error": "Seuls les clients peuvent acheter un model"},
-            status=status.HTTP_403_FORBIDDEN
-        )
+        if request.user.role != 'client' and request.user.role != 'dropshipper':
+            return Response(
+                {"error": "Seuls les clients et dropshippers peuvent acheter un modèle"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         # Valider les données requises
         required_fields = ['phone_number', 'address', 'model_code', 'wilaya_name', 'variants']
         for field in required_fields:
@@ -335,12 +336,12 @@ def create_order(request):
         
         # Trouver la wilaya
         try:
-          wilaya = WilayaDelivery.objects.get(wilaya_name=data['wilaya_name'])
+            wilaya = WilayaDelivery.objects.get(wilaya_name=data['wilaya_name'])
         except WilayaDelivery.DoesNotExist:
-         return Response(
-           {'error': 'Wilaya non trouvée.'},
-           status=status.HTTP_404_NOT_FOUND
-        )
+            return Response(
+                {'error': 'Wilaya non trouvée.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
         
         # Traiter le code promo s'il est fourni
         promo_code_obj = None
@@ -369,37 +370,33 @@ def create_order(request):
             state='pending'
         )
         
-        # Traiter les variantes
+       
         variants_data = data['variants']
         for variant_data in variants_data:
             size = variant_data.get('size')
             color = variant_data.get('color')
-            quantity = variant_data.get('quantity')
+            quantity = int(variant_data.get('quantity'))
             
-            # Trouver ou créer la variante de stock
-            stock_variant, created = StockVariant.objects.get_or_create(
+        
+            stock_variant, created = StockVariantForCommands.objects.get_or_create(
                 size=size,
                 color=color,
-                quantity =quantity,
+                quantity=quantity
             )
             
-            # Ajouter la variante à la commande avec la quantité
-            # Note: Pour ManyToMany avec through, vous devrez peut-être créer un modèle intermédiaire
+            # Ajouter la variante à la commande
             order.standard_command_details.add(stock_variant)
-            
-            # Mettre à jour la quantité (si nécessaire)
-            # Cette partie dépend de votre logique métier
+            stock_variant.save()
         
         # Sauvegarder la commande
         order.save()
         
-        # Incrémenter le compteur d'utilisation du code promo
-        if promo_code_obj:
-            promo_code_obj.save()
         
         return Response(
             {
                 'message': 'Commande créée avec succès.',
+                'order_id': order.id,
+                'order_code': order.code_order
             },
             status=status.HTTP_201_CREATED
         )
@@ -416,13 +413,13 @@ def create_order(request):
 def change_client_name(request):
     try:
         # Vérifier que l'utilisateur est un client
-        try:
-            client = Client.objects.get(user=request.user)
-        except Client.DoesNotExist:
-            return Response(
-                {"error": "Seul un client peut modifier son nom."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        # try:
+        #     client = Client.objects.get(user=request.user)
+        # except Client.DoesNotExist:
+        #     return Response(
+        #         {"error": "Seul un client peut modifier son nom."},
+        #         status=status.HTTP_403_FORBIDDEN
+        #     ) tous les utilisateurs peuvent changer leurs noms 
         
         # Vérifier et parser les données
         data = json.loads(request.body)
