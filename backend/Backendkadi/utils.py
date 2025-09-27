@@ -52,9 +52,6 @@ def send_verification_email(user_or_couturiere):
     msg.attach_alternative(html_content, "text/html")
     msg.send()
 
-
-
-
 def generate_otp():
     return f"{random.randint(100000, 999999)}"
 
@@ -64,7 +61,6 @@ def generate_signed_otp_token(email, otp):
         "otp": otp
     }
     return signing.dumps(payload, salt="password-reset-code")
-
 
 def verify_signed_otp_token(token, otp, max_age=600):
     try:
@@ -76,4 +72,6 @@ def verify_signed_otp_token(token, otp, max_age=600):
         raise serializers.ValidationError("انتهت صلاحية رمز التحقق.")
     except signing.BadSignature:
         raise serializers.ValidationError("رمز التحقق غير صالح.")
+
+
 

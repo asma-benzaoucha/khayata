@@ -15,21 +15,33 @@ from rest_framework.decorators import action
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from .models import User, Couturiere, UserDocuments, Dropshipper
+from .models import User, Couturiere, UserDocuments, Dropshipper 
 from .serializers import (
-    CouturiereSerializer,
     CustomTokenObtainPairSerializer,
-    LoginSerializer,
     UserDocumentsSerializer,
     CouturiereSignupSerializer,
+    ChangePasswordSerializer,
+    ModelFilesSerializer,
 )
+
 from .utils import (
     send_verification_email,
     generate_otp,
     generate_signed_otp_token,
     verify_signed_otp_token,
 )
+
+
+
+
+
+User = get_user_model()
+
+# User section
 
 class Command(BaseCommand):
     help = 'Supprime les utilisateurs inactifs dont les tokens ont expiré.'
@@ -40,7 +52,6 @@ class Command(BaseCommand):
         expired_users.delete()
         self.stdout.write(self.style.SUCCESS(f"{count} utilisateurs supprimés."))
 
-User = get_user_model()
 
 def verify_email(request, uid, token):
     try:
@@ -110,27 +121,9 @@ class ResendVerificationEmailView(APIView):
         except User.DoesNotExist:
             return Response({"error": "Utilisateur non trouvé ou déjà activé"}, status=404)
 
-class LoginView(APIView):
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-
-            # Générer ou récupérer un token
-            token, created = Token.objects.get_or_create(user=user)
-
-            return Response({
-                'token': token.key,
-                'user_id': user.id,
-                'email': user.email,
-                'full_name': user.full_name,
-                'role': user.role
-            })
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
-User = get_user_model()
 class ForgotPasswordView(APIView):
     def post(self, request):
         email = request.data.get("email")
@@ -181,7 +174,6 @@ class VerifyOTPView(APIView):
             "email": user.email 
         })
 
-User = get_user_model()
 class ResetPasswordView(APIView):
     def post(self, request):
         reset_token = request.data.get("reset_token")
@@ -220,54 +212,76 @@ class ResetPasswordView(APIView):
         return Response({"detail": "تم إعادة تعيين كلمة المرور بنجاح."})
 
 
+
+
+
+
+
+# #couturiere section
+# class CouturiereSignupView(APIView):
+#     parser_classes = [MultiPartParser, FormParser]
+    
+
+#     def post(self, request):
+#         serializer = CouturiereSignupSerializer(data=request.data)
+#         if serializer.is_valid():
+#             user = serializer.save()
+#             send_verification_email(user)
+#             return Response(
+#                 {"success": "Inscription réussie. Email de vérification envoyé."},
+#                 status=status.HTTP_201_CREATED
+#             )
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class CouturiereSignupView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
-        serializer = CouturiereSignupSerializer(data=request.data)
+        # COPY data and attach uploaded files list under 'documents'
+        data = request.data.copy()
+        files = request.FILES.getlist('documents') or request.FILES.getlist('files') or request.FILES.getlist('documents[]')
+        if files:
+            data.setlist('documents', files)
+
+        serializer = CouturiereSignupSerializer(data=data, context={"request": request})
         if serializer.is_valid():
             user = serializer.save()
             send_verification_email(user)
-            return Response(
-                {"success": "Inscription réussie. Email de vérification envoyé."},
-                status=status.HTTP_201_CREATED
-            )
+            return Response({"success": "Inscription réussie. Email de vérification envoyé."}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# class UserDocumentsViewSet(viewsets.ModelViewSet):
+#     queryset = UserDocuments.objects.all()
+#     serializer_class = UserDocumentsSerializer
 
-class UserDocumentsViewSet(viewsets.ModelViewSet):
-    queryset = UserDocuments.objects.all()
-    serializer_class = UserDocumentsSerializer
 
+# class CouturiereViewSet(viewsets.ModelViewSet):
+#     queryset = Couturiere.objects.all()
+#     serializer_class = CouturiereSerializer
 
-class CouturiereViewSet(viewsets.ModelViewSet):
-    queryset = Couturiere.objects.all()
-    serializer_class = CouturiereSerializer
+# @action(detail=True, methods=['post'])
+# def upload_document(self, request, pk=None):
+#     couturiere = self.get_object()
+#     user = couturiere.user
+#     documents = request.FILES.getlist('documents')
 
-@action(detail=True, methods=['post'])
-def upload_document(self, request, pk=None):
-    couturiere = self.get_object()
-    user = couturiere.user
-    documents = request.FILES.getlist('documents')
+#     if not documents:
+#         return Response({'error': 'Aucun fichier fourni'}, status=400)
 
-    if not documents:
-        return Response({'error': 'Aucun fichier fourni'}, status=400)
+#     if len(documents) > 5:
+#         return Response({'error': 'Maximum 5 fichiers autorisés'}, status=400)
 
-    if len(documents) > 5:
-        return Response({'error': 'Maximum 5 fichiers autorisés'}, status=400)
-
-    created_docs = []
-    for document in documents:
-        user_doc = UserDocuments(user=user, nom=document)
-        user_doc.save()  # La méthode save() gère les deux étapes
+#     created_docs = []
+#     for document in documents:
+#         user_doc = UserDocuments(user=user, nom=document)
+#         user_doc.save()  # La méthode save() gère les deux étapes
         
-        created_docs.append({
-            'id': user_doc.id,
-            'nom': user_doc.nom.name,
-            'user_id': user.id
-        })
+#         created_docs.append({
+#             'id': user_doc.id,
+#             'nom': user_doc.nom.name,
+#             'user_id': user.id
+#         })
 
-    return Response(created_docs, status=201)
+#     return Response(created_docs, status=201)
 
 
 # class DropshipperViewSet(viewsets.ModelViewSet):
@@ -299,3 +313,352 @@ def upload_document(self, request, pk=None):
 #             })
 
 #         return Response(created_docs, status=201)
+
+
+
+
+
+
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        # Récupérer l'utilisateur connecté
+        user = request.user
+        
+        # Changer le mot de passe
+        user.set_password(serializer.validated_data['newPassword'])
+        user.save()
+        
+        return Response(
+            {"message": "Mot de passe changé avec succès."},
+            status=status.HTTP_200_OK
+        )
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    
+
+User = get_user_model()
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_client_name(request):
+    """
+    Retourne le nom du client authentifié
+    """
+    try:
+        # Récupérer l'utilisateur connecté
+        user = request.user
+        
+        # Retourner le nom du client
+        return Response({
+            'full_name': user.full_name,
+            'email': user.email,
+            'role': user.role
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': 'Erreur serveur'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+        
+        
+        
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from .models import FashionModel
+from .serializers import CouturiereModelSerializer
+
+class AddModelView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        # Vérifier qu'il y a au moins un fichier
+        if not request.FILES.getlist("files"):
+            return Response(
+                {"error": "Vous devez inclure au moins un fichier."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer = CouturiereModelSerializer(data=request.data, context={"request": request})
+
+
+        if serializer.is_valid():
+            serializer.save()  # sécuriser encore une fois
+    
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from .models import FashionModel
+from .serializers import FashionModelListSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from .models import FashionModel
+from .serializers import FashionModelListSerializer
+class CouturiereModelsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role != 'couturiere':
+            return Response(
+                {"error": "Accès réservé aux couturières"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        models = FashionModel.objects.filter(owner=user)\
+                                    .prefetch_related('images', 'variants')\
+                                    .order_by("-created_at")
+    
+        serializer = FashionModelListSerializer(
+            models,
+            many=True,
+            context={'request': request}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+from .models import CustomOrder 
+from .serializers import CustomOrderSerializer
+
+
+class OffresFassouCouturiereModelsView(APIView):
+    """
+    Toutes les demandes fassou NON encore affectées à une couturière
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role != "couturiere":
+            return Response({"error": "Accès réservé aux couturières"}, status=status.HTTP_403_FORBIDDEN)
+
+        demandes = CustomOrder.objects.filter(command_type="fassou", assigned_couturiere__isnull=True)
+        serializer = CustomOrderSerializer(demandes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DemandesFassouCouturiereModelsView(APIView):
+    """
+    Toutes les offres fassou affectées à la couturière connectée
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role != "couturiere":
+            return Response({"error": "Accès réservé aux couturières"}, status=status.HTTP_403_FORBIDDEN)
+
+        offres = CustomOrder.objects.filter(command_type="fassou", assigned_couturiere=user)
+        serializer = CustomOrderSerializer(offres, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DemandesPersonaliseView(APIView):
+    """
+    Toutes les demandes personalise affectées à la couturière connectée
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role != "couturiere":
+            return Response({"error": "Accès réservé aux couturières"}, status=status.HTTP_403_FORBIDDEN)
+
+        offres = CustomOrder.objects.filter(command_type="personalized", assigned_couturiere=user)
+        serializer = CustomOrderSerializer(offres, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
+
+class ModifyFassouOfferView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        try:
+            order = CustomOrder.objects.get(pk=pk, command_type="fassou")
+        except CustomOrder.DoesNotExist:
+            return Response({"error": "Offer not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Only couturiere can take the offer
+        if request.user.role != "couturiere":
+            return Response({"error": "Only couturiere can take offers"}, status=status.HTTP_403_FORBIDDEN)
+
+        # Check if already assigned
+        if order.assigned_couturiere is not None:
+            return Response({"error": "This offer has already been taken"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update order
+        order.state = "inprogress"
+        order.assigned_couturiere = request.user
+        order.save()
+
+        serializer = CustomOrderSerializer(order, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
+from rest_framework import generics, permissions
+from django.contrib.auth import get_user_model
+from .models import Couturiere
+from .serializers import UserAccountSerializer, CouturiereAccountSerializer,ChangePasswordWithVerificationSerializer,AffiliateAccountSerializer
+
+User = get_user_model()
+
+class ProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserAccountSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+class AffiliateProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = AffiliateAccountSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user 
+
+
+
+
+class CouturiereProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = CouturiereAccountSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return Couturiere.objects.get(user=self.request.user)
+
+
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password_with_verification(request):
+    serializer = ChangePasswordWithVerificationSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        user = request.user
+        
+        # Vérifier l'ancien mot de passe
+        if not user.check_password(serializer.validated_data['current_password']):
+            return Response({"current_password": "Mot de passe actuel incorrect."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Changer le mot de passe
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+        
+        return Response(
+            {"message": "Mot de passe changé avec succès."},
+            status=status.HTTP_200_OK
+        )
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+
+
+
+
+
+from rest_framework import generics, permissions
+from .models import PromoCode
+from .serializers import PromoCodeSerializer
+
+class AffiliatePromoCodeListView(generics.ListAPIView):
+    serializer_class = PromoCodeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Only promo codes for the logged-in affiliate
+        return PromoCode.objects.filter(affiliate=self.request.user)
+
+
+
+
+
+
+
+
+
+
+
+# views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Sum, Count
+from .models import Order
+from .serializers import AffiliateOrderSerializer
+# views.py
+class AffiliateOrdersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        affiliate = request.user
+        orders = (
+            Order.objects.filter(
+                state="done",
+                promo_code__affiliate=affiliate
+            )
+            .select_related("promo_code", "fashion_model")
+            .prefetch_related("standard_command_details")
+        )
+
+        serializer = AffiliateOrderSerializer(orders, many=True)
+
+        # Totals
+        total_orders = orders.count()
+
+        total_discounts = 0
+        total_profit = 0
+
+        for o in orders:
+            quantity = sum(v.quantity for v in o.standard_command_details.all())
+            base_price = o.fashion_model.price_per_piece_for_client * quantity
+
+            discount = 0
+            if o.promo_code:
+                discount = base_price * (o.promo_code.discount_percentage / 100)
+                profit = (base_price - discount) * (o.promo_code.profit_percentage / 100)
+                total_profit += profit
+
+            total_discounts += discount
+
+        return Response({
+            "orders": serializer.data,
+            "totals": {
+                "total_orders": total_orders,
+                "total_discounts": total_discounts,
+                "total_profit": total_profit
+            }
+        })

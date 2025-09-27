@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Cairo:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri&family=Cairo:wght@400;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,8 +13,6 @@ body {
   font-family: 'Amiri', serif;
   font-weight: 700;
 }
-/* @import "tailwindcss";
-@import "tw-animate-css"; */
 
 * {
   margin: 0;

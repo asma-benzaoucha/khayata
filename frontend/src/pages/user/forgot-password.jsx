@@ -236,15 +236,78 @@ export default function ForgotPassword() {
     navigate("/login");
   };
 
+  // return (
+  //   <div className="fixed inset-0 bg-[#F4F3EF] flex flex-col items-center justify-start px-4 pt-8 pb-4">
+  //     <div className="relative w-full max-w-md flex justify-center items-center mb-4">
+  //       <h2 className="text-[#E5B62B] text-2xl text-center amiri-bold">نسيت كلمة المرور؟</h2>
+  //       <ArrowLeft onClick={() => navigate(-1)}
+  //         className="absolute left-4 text-[#374151] w-5 h-5 cursor-pointer"
+  //         // onClick={handleBackToLogin}
+  //       />
+  //       <div className="fixed top-4 right-0 z-50">
+  //         <img
+  //           src="/logo.png"
+  //           alt="Logo"
+  //           className="w-[8rem] max-w-full h-auto object-contain"
+  //         />
+  //       </div>
+  //     </div>
+
+  //     <div className="bg-white rounded-t-3xl rounded-b-2xl shadow-md w-full max-w-xl h-[70vh] flex flex-col overflow-hidden">
+  //       <div className="overflow-y-auto px-6 py-6 flex-1" dir="rtl">
+  //         <form onSubmit={handleSubmit} className="space-y-6">
+  //           <p className="text-center text-[#374151] text-base leading-relaxed">
+  //             أدخل بريدك الإلكتروني وسنرسل لك رمزًا لإعادة تعيين كلمة المرور.
+  //           </p>
+
+  //           <div className="space-y-2 text-right">
+  //             <label className="text-sm text-[#374151] amiri-bold">
+  //               البريد الإلكتروني:
+  //             </label>
+  //             <InputField
+  //               type="text" // Important: avoid native HTML validation
+  //               placeholder="example@gmail.com"
+  //               value={formData.email}
+  //               onChange={(val) => handleInputChange("email", val)}
+  //               error={errors.email}
+  //             />
+  //           </div>
+
+  //           <Button
+  //             type="submit"
+  //             className="w-full h-12 rounded-full text-white font-medium mt-2"
+  //             style={{ backgroundColor: "#E5B62B" }}
+  //             disabled={!formData.email || isSending}
+  //           >
+  //             {isSending ? "جارٍ الإرسال..." : "إرسال الرمز"}
+  //           </Button>
+
+  //           <div className="text-center">
+  //             <Link to="/login" className="text-[#4A66BD] text-sm underline cursor-pointer">
+  //               العودة إلى تسجيل الدخول
+  //             </Link>
+  //           </div>
+  //         </form>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
   return (
-    <div className="fixed inset-0 bg-[#F4F3EF] flex flex-col items-center justify-start px-4 pt-8 pb-4">
-      <div className="relative w-full max-w-md flex justify-center items-center mb-4">
-        <h2 className="text-[#E5B62B] text-2xl text-center amiri-bold">نسيت كلمة المرور؟</h2>
+    <div className="min-h-screen bg-[#F4F3EF] flex flex-col items-center justify-start px-4 pt-8 pb-4 md:fixed md:inset-0">
+      {/* Desktop Header */}
+      <div className="hidden md:flex relative w-full max-w-md justify-center items-center mb-4">
+        <h2 className="text-[#E5B62B] text-2xl text-center amiri-bold">
+          نسيت كلمة المرور؟
+        </h2>
+  
+        {/* Back arrow (desktop - left) */}
         <ArrowLeft
+          onClick={() => navigate(-1)}
           className="absolute left-4 text-[#374151] w-5 h-5 cursor-pointer"
-          onClick={handleBackToLogin}
         />
-        <div className="fixed top-4 right-0 z-50">
+  
+        {/* Logo (desktop - top right) */}
+        <div className="hidden md:block fixed top-4 right-0 z-50">
           <img
             src="/logo.png"
             alt="Logo"
@@ -252,27 +315,52 @@ export default function ForgotPassword() {
           />
         </div>
       </div>
-
-      <div className="bg-white rounded-t-3xl rounded-b-2xl shadow-md w-full max-w-xl h-[70vh] flex flex-col overflow-hidden">
+  
+      {/* Mobile Header */}
+      <div className="md:hidden w-full max-w-md flex flex-col items-center mb-4">
+        <img
+          src="/logo.png"
+          alt="Logo"
+          className="w-28 h-auto object-contain mb-4"
+        />
+  
+        <div className="relative w-full flex justify-center items-center">
+          <h2 className="text-[#E5B62B] text-xl text-center amiri-bold">
+            نسيت كلمة المرور؟
+          </h2>
+          <ArrowLeft
+            onClick={() => navigate(-1)}
+            className="absolute left-4 text-[#374151] w-5 h-5 cursor-pointer"
+          />
+        </div>
+      </div>
+  
+      {/* White Card */}
+      <div
+        className="
+          bg-white rounded-2xl shadow-md w-full max-w-md
+          md:max-w-xl md:rounded-t-3xl md:rounded-b-2xl md:h-[70vh] flex flex-col overflow-hidden
+        "
+      >
         <div className="overflow-y-auto px-6 py-6 flex-1" dir="rtl">
           <form onSubmit={handleSubmit} className="space-y-6">
             <p className="text-center text-[#374151] text-base leading-relaxed">
               أدخل بريدك الإلكتروني وسنرسل لك رمزًا لإعادة تعيين كلمة المرور.
             </p>
-
+  
             <div className="space-y-2 text-right">
               <label className="text-sm text-[#374151] amiri-bold">
                 البريد الإلكتروني:
               </label>
               <InputField
-                type="text" // Important: avoid native HTML validation
+                type="text"
                 placeholder="example@gmail.com"
                 value={formData.email}
                 onChange={(val) => handleInputChange("email", val)}
                 error={errors.email}
               />
             </div>
-
+  
             <Button
               type="submit"
               className="w-full h-12 rounded-full text-white font-medium mt-2"
@@ -281,9 +369,12 @@ export default function ForgotPassword() {
             >
               {isSending ? "جارٍ الإرسال..." : "إرسال الرمز"}
             </Button>
-
+  
             <div className="text-center">
-              <Link to="/login" className="text-[#4A66BD] text-sm underline cursor-pointer">
+              <Link
+                to="/login"
+                className="text-[#4A66BD] text-sm underline cursor-pointer"
+              >
                 العودة إلى تسجيل الدخول
               </Link>
             </div>
@@ -292,5 +383,6 @@ export default function ForgotPassword() {
       </div>
     </div>
   );
+  
 }
 

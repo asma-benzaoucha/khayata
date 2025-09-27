@@ -1,13 +1,28 @@
 from django.db import models
-from .stock import StockVariant
 from .promo import PromoCode
+from django.contrib.auth import get_user_model
+import uuid
 
+# Get the user model at the module level
+User = get_user_model()
 TYPE_CHOICES = [
-    ('dress', 'Robe'),
-    ('abaya', 'Abaya'),
-    ('ensemble', 'Ensemble'),
-]
+    ('femme', 'Femme'),
+    ('homme', 'Homme'),
+    ('enfant', 'Enfant'),
+    ('babie','Babie'),
+] 
 
+import string
+from django.db import models
+
+def encode_base36(num):
+    chars = string.digits + string.ascii_uppercase  # 0-9 + A-Z
+    base = len(chars)
+    result = ""
+    while num > 0:
+        num, rem = divmod(num, base)
+        result = chars[rem] + result
+    return result or "0"
 class FashionModel(models.Model):
     STATE_CHOICES = [
         ('accepted', 'Accepted'),
@@ -15,24 +30,51 @@ class FashionModel(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
+
+
     name = models.CharField(max_length=255)
-    code = models.CharField(max_length=50, unique=True)
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    code = models.CharField(
+        max_length=10,
+        unique=True, 
+        blank=True,          # on laisse vide pour le générer après
+        editable=False
+    )    
     
-    price_per_piece_for_client = models.DecimalField(max_digits=10, decimal_places=2)
-    price_per_piece_for_dropshipper = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    price=models.DecimalField(max_digits=20,decimal_places=2,default=0)
+    price_per_piece_for_client = models.DecimalField(max_digits=20, decimal_places=2,blank=False,null=False)
+    price_per_piece_for_dropshipper = models.DecimalField(max_digits=20, decimal_places=2,default=0)
     
     description = models.TextField()
-    folder = models.ImageField(upload_to='models/', blank=True, null=True)
-    min_pieces_for_dropshipper = models.PositiveIntegerField()
+    min_pieces_for_dropshipper = models.PositiveIntegerField(default=1)
 
-    variants = models.ManyToManyField(StockVariant, related_name='fashion_models')
-    
+
+
     state = models.CharField(max_length=20, choices=STATE_CHOICES, default='waiting')
-    promo_code = models.ForeignKey(PromoCode, on_delete=models.SET_NULL, blank=True, null=True)
+    promo_codes = models.ManyToManyField(PromoCode, blank=True, related_name='models_CodePromo')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    owner = models.ForeignKey(         
+        User,
+        on_delete=models.CASCADE,
+        related_name='fashion_models',
+        limit_choices_to={'role': 'couturiere'},
+    )
+    
+    def save(self, *args, **kwargs):
+        # Sauvegarder une première fois pour générer l'ID
+        if not self.id:
+            super().save(*args, **kwargs)
+        # Si le code n’existe pas encore → générer à partir de l’ID
+        if not self.code:
+            self.code = encode_base36(self.id).zfill(4)  # min 4 caractères
+            return super().save(update_fields=["code"])
+        return super().save(*args, **kwargs)
+
+
 
     def total_pieces(self):
         return sum(variant.quantity for variant in self.variants.all())
@@ -42,3 +84,17 @@ class FashionModel(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.code})"
+
+
+
+
+class ModelImage(models.Model):
+    fashion_model = models.ForeignKey(
+        FashionModel, 
+        on_delete=models.CASCADE, 
+        related_name='images'
+    )
+    image = models.FileField(upload_to='models/')
+
+    def __str__(self):
+        return f"Image for {self.fashion_model.code}"
