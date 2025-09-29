@@ -372,8 +372,8 @@ export default function RegistrationCouturiere() {
       // Réinitialiser les compteurs de renvoi après succès
       setResendCount(0)
       setLastResendTime(null)
-      setFiles([])
-      setAcceptTerms(false)
+      // setFiles([])
+      // setAcceptTerms(false)
       setErrors({})
        // Clear all errors on successful submission
 
@@ -412,7 +412,7 @@ export default function RegistrationCouturiere() {
       {/* Header */}
       <div className="relative mb-4 flex w-full max-w-md items-center justify-center">
         <h2 className="amiri-bold text-center text-2xl text-[#E5B62B]">تسجيل حساب خياطة</h2>
-        <ArrowLeft className="absolute left-4 h-5 w-5 cursor-pointer text-[#374151]" />
+        <ArrowLeft onClick={() => navigate(-1)} className="absolute left-4 h-5 w-5 cursor-pointer text-[#374151]" />
         <div className="fixed right-0 top-4 z-50">
           <img src="/logo.png" alt="Logo" className="h-auto w-[8rem] max-w-full object-contain" />
         </div>

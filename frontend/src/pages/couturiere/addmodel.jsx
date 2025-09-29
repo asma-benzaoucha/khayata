@@ -147,16 +147,7 @@ export default function AddNewModel() {
     })
   }
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault()
-  //   if (!isFormValid() || Object.keys(errors).length > 0) return
 
-  //   setIsAdding(true)
-  //   setTimeout(() => {
-  //     setIsAdding(false)
-  //     alert("✅ تم إضافة النموذج بنجاح!")
-  //   }, 1500)
-  // }
 
   const handleSubmit = async (e) => {
     e.preventDefault()

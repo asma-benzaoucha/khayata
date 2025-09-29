@@ -1,264 +1,3 @@
-// import React, { useState } from "react";
-// import axios from "axios";
-// import { toast } from "react-toastify";
-
-// import calendarIcon from "../../assets/model/calendar.png";
-// import moneyIcon from "../../assets/model/money.png";
-// import boxIcon from "../../assets/model/box.png";
-// import bookIcon from "../../assets/model/book.png";
-// import descriptionIcon from "../../assets/model/description.png";
-// import colorsIcon from "../../assets/model/colors.png";
-// import mesureIcon from "../../assets/model/mesure.png";
-// import quantityIcon from "../../assets/model/quantite.png";
-
-// import { X, ChevronLeft, ChevronRight } from "lucide-react";
-// import { motion, AnimatePresence } from "framer-motion";
-// import { getArabicColorLabel } from "@/utils/colorUtils";
-
-// export default function ModelCardFassou({
-//   id,
-//   nameorder,
-//   codeorder,
-//   initial_price,
-//   created_at,
-//   type,
-//   description,
-//   images = [],
-//   variants = [], // ⚡️ ici on reçoit la liste des tailles/couleurs/quantités
-// }) {
-//   const [showDetails, setShowDetails] = useState(false);
-//   const [modalOpen, setModalOpen] = useState(false);
-//   const [activeIndex, setActiveIndex] = useState(0);
-
-//   const typeLabels = {
-//     Femme: "نسائي",
-//     Homme: "رجالي",
-//     Enfant: "أطفال",
-//     Babie: "رضع",
-//   };
-
-//   const nextImage = () => setActiveIndex((prev) => (prev + 1) % images.length);
-//   const prevImage = () =>
-//     setActiveIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-
-//   // 🎯 Fonction pour prendre l’offre
-//   const handleTakeOffer = async () => {
-//     if (!window.confirm("هل أنت متأكد أنك تريد أخذ هذا العرض؟")) return;
-
-//     try {
-//       const token = localStorage.getItem("accessToken");
-//       await axios.post(
-//         "http://127.0.0.1:8000/api/ModifyFassouOffer/",
-//         { id }, // ⚡️ adapte selon ton backend
-//         { headers: { Authorization: `Bearer ${token}` } }
-//       );
-
-//       toast.success("🎉 تهانينا! لقد حصلت على العرض. ستجد التفاصيل في قسم طلبات الفصو.");
-//     } catch (err) {
-//       console.error(err);
-//       toast.error("❌ حدث خطأ. يرجى المحاولة مرة أخرى.");
-//     }
-//   };
-
-//   return (
-//     <div className="border-2 border-[#999EA6] rounded-2xl p-4 shadow-sm flex flex-col gap-4">
-//       <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
-//         {/* Left Section */}
-//         <div className="space-y-2">
-//           <h2 className="text-[22px] font-cairo text-[#374151]">
-//             {nameorder} : <span className="text-[#374151]">كود {codeorder}</span>
-//           </h2>
-
-//           <div className="flex items-center mt-4 gap-6 text-[18px] font-amiri text-[#374151]">
-//             <div className="flex items-center gap-2">
-//               <img src={calendarIcon} alt="calendar" className="w-5 h-5" />
-//               {new Date(created_at).toLocaleDateString("fr-FR")}
-//             </div>
-//             <div className="flex items-center gap-2">
-//               <img src={moneyIcon} alt="money" className="w-5 h-5" />
-//               {initial_price} دج (السعر الإجمالي)
-//             </div>
-//             <div>
-//               <button
-//                 className="text-blue-500 text-[18px] font-amiri"
-//                 onClick={() => setShowDetails(!showDetails)}
-//               >
-//                 {showDetails ? "عرض أقل ..." : "عرض المزيد ..."}
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Bouton prendre l’offre */}
-//         <div className="flex items-center gap-2">
-//           <button
-//             onClick={handleTakeOffer}
-//             className="bg-[#F0C84B] hover:bg-[#d9b63d] text-black font-cairo px-6 py-2 rounded-full"
-//           >
-//             خذ العرض
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* --- Détails --- */}
-//       {showDetails && (
-//         <div>
-//           <hr className="border-[#999EA6] mb-3 " />
-//           <div className="flex flex-col md:flex-row flex-wrap gap-4 text-[18px] font-amiri text-[#374151]">
-//             {/* Description + Table */}
-//             <div className="flex-1 max-w-lg">
-//               <div className="flex flex-col gap-2">
-//                 <div className="flex items-center gap-2">
-//                   <img src={bookIcon} alt="book" className="w-5 h-5" />
-//                   النوع: {typeLabels[type] || type}
-//                 </div>
-
-//                 <p className="mt-2 flex items-start gap-2 leading-relaxed">
-//                   <img src={descriptionIcon} alt="desc" className="w-5 h-5 mt-1" />
-//                   {description}
-//                 </p>
-//               </div>
-
-//               {variants.length > 0 && (
-//                 <table className="mt-4 w-full text-center border border-[#999EA6] border-collapse">
-//                   <thead className="bg-gray-100">
-//                     <tr>
-//                       <th className="p-2 border border-[#999EA6]">المقاس</th>
-//                       <th className="p-2 border border-[#999EA6]">اللون</th>
-//                       <th className="p-2 border border-[#999EA6]">الكمية</th>
-//                     </tr>
-//                   </thead>
-//                   <tbody>
-//                     {variants.map((v, i) => (
-//                       <tr key={i} className="border border-[#999EA6]">
-//                         <td className="p-2 border border-[#999EA6]">{v.size}</td>
-//                         <td className="p-2 border border-[#999EA6]">
-//                           <div className="flex items-center justify-center gap-2">
-//                             <span
-//                               className="w-4 h-4 rounded-full border border-[#999EA6]"
-//                               style={{ backgroundColor: v.hex || "#ccc" }}
-//                             ></span>
-//                             {getArabicColorLabel(v.color)}
-//                           </div>
-//                         </td>
-//                         <td className="p-2 border border-[#999EA6]">{v.quantity}</td>
-//                       </tr>
-//                     ))}
-//                   </tbody>
-//                 </table>
-//               )}
-//             </div>
-
-//             {/* Images */}
-//             {images.length > 0 && (
-//               <div className="flex flex-col items-center justify-center flex-1">
-//                 <img
-//                   src={images[activeIndex]}
-//                   alt={nameorder}
-//                   className="w-48 h-64 object-cover rounded-xl cursor-pointer"
-//                   onClick={() => setModalOpen(true)}
-//                 />
-//                 <div className="flex gap-2 mt-2">
-//                   {images.map((_, i) => (
-//                     <span
-//                       key={i}
-//                       onClick={() => setActiveIndex(i)}
-//                       className={`w-3 h-3 rounded-full cursor-pointer transition ${
-//                         i === activeIndex ? "bg-yellow-400 scale-110" : "bg-gray-300"
-//                       }`}
-//                     />
-//                   ))}
-//                 </div>
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       )}
-
-//       {/* --- Modal Images --- */}
-//       {modalOpen && (
-//         <div
-//           className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/70"
-//           onClick={() => setModalOpen(false)}
-//         >
-//           <div
-//             className="bg-white rounded-2xl p-4 max-w-5xl w-full relative overflow-hidden"
-//             onClick={(e) => e.stopPropagation()}
-//           >
-//             <button
-//               className="absolute top-2 left-2 bg-gray-100 p-1 rounded-full hover:bg-gray-200"
-//               onClick={() => setModalOpen(false)}
-//             >
-//               <X size={28} />
-//             </button>
-
-//             <h3 className="text-center text-[22px] font-cairo text-[#374151] mb-4">
-//               {nameorder}
-//             </h3>
-
-//             <div className="flex items-center justify-center relative">
-//               <button
-//                 onClick={prevImage}
-//                 disabled={activeIndex === 0}
-//                 className={`absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full ${
-//                   activeIndex === 0
-//                     ? "text-gray-400 cursor-not-allowed"
-//                     : "text-black hover:bg-gray-100"
-//                 }`}
-//               >
-//                 <ChevronLeft size={36} />
-//               </button>
-
-//               <div className="flex items-center justify-center gap-4 w-full overflow-hidden relative h-[70vh]">
-//                 <AnimatePresence initial={false}>
-//                   {images.map((img, i) => {
-//                     let offset = i - activeIndex;
-//                     return (
-//                       <motion.img
-//                         key={i}
-//                         src={img}
-//                         alt={`${nameorder}-${i}`}
-//                         initial={{ opacity: 0, scale: 0.8 }}
-//                         animate={{
-//                           opacity: offset === 0 ? 1 : 0.6,
-//                           scale: offset === 0 ? 1 : 0.7,
-//                           x: offset * 300,
-//                         }}
-//                         exit={{ opacity: 0 }}
-//                         transition={{ duration: 0.5 }}
-//                         className={`rounded-xl shadow-lg cursor-pointer ${
-//                           offset === 0 ? "z-20" : "z-10"
-//                         }`}
-//                         style={{
-//                           maxHeight: offset === 0 ? "70vh" : "50vh",
-//                           position: "absolute",
-//                         }}
-//                         onClick={() => setActiveIndex(i)}
-//                       />
-//                     );
-//                   })}
-//                 </AnimatePresence>
-//               </div>
-
-//               <button
-//                 onClick={nextImage}
-//                 disabled={activeIndex === images.length - 1}
-//                 className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full ${
-//                   activeIndex === images.length - 1
-//                     ? "text-gray-400 cursor-not-allowed"
-//                     : "text-black hover:bg-gray-100"
-//                 }`}
-//               >
-//                 <ChevronRight size={36} />
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
 import { useState } from "react"
 import checkIcon from "../../assets/model/checked.png"
 import calendarIcon from "../../assets/model/calendar.png"
@@ -508,26 +247,31 @@ const formatDeadline = (dateString) => {
 
             {/* Right - Images */}
             {images.length > 0 && (
-              <div className="flex flex-col items-center justify-center flex-1">
+              <div className="flex flex-col items-center justify-center flex-1 w-full">
+                {/* Image */}
                 <img
                   src={images[activeIndex]}
                   alt={name}
-                  className="w-48 h-64 object-cover rounded-xl cursor-pointer"
+                  className="w-full sm:w-48 sm:h-64 h-56 object-cover rounded-xl cursor-pointer"
                   onClick={() => setModalOpen(true)}
                 />
-                <div className="flex gap-2 mt-2">
+
+                {/* Dots identiques desktop + mobile */}
+                <div className="flex justify-center mt-2 gap-2">
                   {images.map((_, i) => (
-                    <span
+                    <button
                       key={i}
                       onClick={() => setActiveIndex(i)}
-                      className={`w-3 h-3 rounded-full cursor-pointer transition ${
+                      className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full cursor-pointer transition ${
                         i === activeIndex ? "bg-yellow-400 scale-110" : "bg-gray-300"
                       }`}
+                      aria-label={`Select image ${i + 1}`}
                     />
                   ))}
                 </div>
               </div>
             )}
+
           </div>
         </div>
       )}

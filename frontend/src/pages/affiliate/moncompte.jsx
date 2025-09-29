@@ -163,7 +163,7 @@ return error
         }),
       })
       if (!res.ok) throw new Error("Erreur lors de la mise à jour du profil")
-      toast.success("✅ تم حفظ التغييرات بنجاح")
+      toast.success("تم حفظ التغييرات بنجاح")
       setEditableField(null)
     } catch (err) {
       console.error(err)
@@ -197,8 +197,23 @@ return error
           new_password: formData.newPassword,
         }),
       })
-      if (!res.ok) throw new Error("Erreur lors du changement de mot de passe")
-      toast.success("✅ تم تحديث كلمة المرور بنجاح")
+    const data = await res.json()
+
+      if (!res.ok) {
+        // 🔹 Traduire le message si c’est le cas
+        if (data.current_password) {
+          let errorMessage = data.current_password
+          if (errorMessage === "Mot de passe actuel incorrect.") {
+            errorMessage = "كلمة المرور الحالية غير صحيحة"
+          }
+          setErrors(prev => ({ ...prev, currentPassword: errorMessage }))
+          toast.error(errorMessage)
+        } else {
+          toast.error("فشل في تغيير كلمة المرور")
+        }
+        return
+      }
+      toast.success("تم تحديث كلمة المرور بنجاح")
       setFormData(s => ({ ...s, currentPassword: "", newPassword: "", confirmPassword: "" }))
     } catch (err) {
       console.error(err)

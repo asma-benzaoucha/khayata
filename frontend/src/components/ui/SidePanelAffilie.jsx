@@ -1,95 +1,8 @@
-// // components/ui/SidePanel.jsx
-// import React, { useState } from "react";
-// import { LogOut } from "lucide-react";
-// import { NavLink, useNavigate } from "react-router-dom";
 
-// export default function SidePanel({ children, menuItems }) {
-//   const navigate = useNavigate();
-//   const [showConfirm, setShowConfirm] = useState(false);
 
-//   const handleLogout = () => {
-//     localStorage.removeItem("token");
-//     navigate("/login");
-//   };
 
-//   return (
-//     <div className="flex w-full h-screen bg-[#F4F3EF]">
-//       {/* Sidebar */}
-//       <aside className="flex flex-col items-center w-64 m-4 rounded-3xl  shadow-[0_4px_4px_rgba(0,0,0,0.25)]  p-6 bg-white border-[#DDDDC6] border-[5px]">
-//         {/* Logo */}
-//         <div className="flex justify-center items-center h-32 w-full">
-//           <img src="/logo.png" alt="Logo" className="h-20 object-contain" />
-//         </div>
-
-//         {/* Menu */}
-//         <div className="flex flex-col gap-4 mt-4 w-full items-center ">
-//           {menuItems.map((item, idx) => (
-//             <NavLink
-//               key={idx}
-//               to={item.path}
-//               className={({ isActive }) =>
-//                 `w-56 h-14 px-4 flex gap-x-2 items-center rounded-[16px] border-2 font-semibold shadow-md transition-colors
-//                 ${
-//                   isActive
-//                     ? "border-[#F0C84B] text-[#F0C84B]"
-//                     : "border-[#DDDDC6] text-[#374151]"
-//                 }
-//                 hover:border-[#F0C84B] hover:text-[#F0C84B]`
-//               }
-//             >
-//               {item.icon}
-//               <span className="whitespace-nowrap">{item.label}</span>
-//             </NavLink>
-//           ))}
-
-//           {/* Logout */}
-//           <div className="mt-6">
-//             <button
-//               onClick={() => setShowConfirm(true)}
-//               className="text-[#4A66BD] underline flex items-center gap-2"
-//             >
-//               <LogOut size={15} />
-//               <span>تسجيل الخروج</span>
-//             </button>
-//           </div>
-//         </div>
-//       </aside>
-
-//       {/* Main Content */}
-//       <main className="flex-1 m-4 rounded-3xl border-[5px] border-[#DDDDC6] shadow-[0_4px_4px_rgba(0,0,0,0.25)]  bg-white p-6 overflow-auto">
-//         {children}
-//       </main>
-
-//       {/* Confirmation Modal */}
-//       {showConfirm && (
-//         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-//           <div className="bg-white rounded-2xl shadow-lg p-6 w-80 text-center">
-//             <p className="text-lg font-semibold mb-4">
-//               هل أنت متأكد أنك تريد تسجيل الخروج؟
-//             </p>
-//             <div className="flex justify-center gap-4">
-//               <button
-//                 onClick={handleLogout}
-//                 className="bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600"
-//               >
-//                 نعم
-//               </button>
-//               <button
-//                 onClick={() => setShowConfirm(false)}
-//                 className="bg-gray-300 px-4 py-2 rounded-xl hover:bg-gray-400"
-//               >
-//                 لا
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-
-// }
-// components/ui/SidePanel.jsx
-import React, { useState } from "react";
+// components/ui/SidePanelAffilie.jsx
+import React, { useState, useEffect } from "react";
 import { LogOut, Menu, X } from "lucide-react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 
@@ -98,16 +11,36 @@ export default function SidePanel({ children, menuItems }) {
   const location = useLocation();
   const [showConfirm, setShowConfirm] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeItem, setActiveItem] = useState(
+    menuItems.length > 0 ? menuItems[0] : null
+  );
 
+  // Version alternative plus simple - sans redirection automatique
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const isValidPath = menuItems.some(item => 
+      currentPath === item.path || currentPath.startsWith(item.path + "/")
+    );
+    
+    if (!isValidPath && menuItems.length > 0) {
+      setActiveItem(menuItems[0]);
+    } else {
+      const foundItem = menuItems.find(item => 
+        currentPath === item.path || currentPath.startsWith(item.path)
+      );
+      if (foundItem) {
+        setActiveItem(foundItem);
+      }
+    }
+  }, [location.pathname, menuItems]);
+
+ 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
     navigate("/login");
   };
-
-  // === Récupérer le label du menu actif ===
-  const activeItem =
-    menuItems.find((item) => location.pathname.startsWith(item.path)) || null;
-
   return (
     <div className="flex w-full h-screen bg-[#F4F3EF] p-4 gap-4">
       {/* ===== Desktop Sidebar ===== */}
@@ -215,9 +148,12 @@ export default function SidePanel({ children, menuItems }) {
 
               {/* Logout */}
               <button
-                onClick={handleLogout}
-                className="mt-6 text-[#F0C84B] underline flex items-center gap-2"
-              >
+                  onClick={() => {
+                    setMobileOpen(false);    // ← Ferme le drawer
+                    setShowConfirm(true);    // ← Ouvre la popup de confirmation
+                  }}
+                  className="mt-6 text-[#F0C84B] underline flex items-center gap-2"
+                >
                 <LogOut size={15} />
                 <span>تسجيل الخروج</span>
               </button>
@@ -258,3 +194,5 @@ export default function SidePanel({ children, menuItems }) {
     </div>
   );
 }
+
+

@@ -142,7 +142,7 @@ function AppWrapper() {
         <Route path="/couturiere/MyAccount" element={<MyAccount />} />
         <Route path="/affiliate/MyAccount" element={<AffiliateAccount />} />
         
-        <Route path="/AffiliateDashboard/CodePromo" element={<AffiliateCodePromoDashboard />} />
+        <Route path="/affiliateDashboard/codepromo" element={<AffiliateCodePromoDashboard />} />
         <Route path="/AffiliateDashboard/Statistics" element={<StatisticsPage />} />
         <Route path="/DemandesOffresFassou" element={<DemandesOffresFassou />} />
       </Routes>

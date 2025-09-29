@@ -1,100 +1,7 @@
-// // pages/AffiliateDashboard.jsx
-// import React, { useState } from "react";
-// import { Tag, BarChart3, User } from "lucide-react";
-// import SidePanel from "../../components/ui/SidePanelAffilie";
-
-// const investmentData = [
-//   {
-//     id: 1,
-//     status: "نشط",
-//     statusColor: "text-green-500",
-//     endDate: "12/07/2025",
-//     activationDate: "12/07/2024",
-//     profitPercentage: "10%",
-//     discountPercentage: "5%",
-//     model: "حجاب صيفي HJB-BEIGE-) عبايةXL K04 (ABK04-NR)",
-//     code: "KADI10",
-//   },
-//   {
-//     id: 2,
-//     status: "متوقع",
-//     statusColor: "text-red-500",
-//     endDate: "10/01/2025",
-//     activationDate: "12/12/2024",
-//     profitPercentage: "5%",
-//     discountPercentage: "3%",
-//     model: "فيروموني جرير (123123) خيموني صيفي (ABK0404)",
-//     code: "KADI2025",
-//   },
-//   {
-//     id: 3,
-//     status: "متوقع",
-//     statusColor: "text-red-500",
-//     endDate: "10/10/2023",
-//     activationDate: "12/02/2023",
-//     profitPercentage: "5%",
-//     discountPercentage: "3%",
-//     model: "جلابة فاخرة (DH-HJX-01)",
-//     code: "ETE2023",
-//   },
-//   {
-//     id: 3,
-//     status: "متوقع",
-//     statusColor: "text-red-500",
-//     endDate: "10/10/2023",
-//     activationDate: "12/02/2023",
-//     profitPercentage: "5%",
-//     discountPercentage: "3%",
-//     model: "جلابة فاخرة (DH-HJX-01)",
-//     code: "ETE2023",
-//   },
-// ];
-
-// export default function AffiliateDashboard() {
-//   const menuItems = [
-//     { label: "أكواد التخفيض", icon: <Tag size={20} />, path: "/affiliateDashboard/codepromo" },
-//     { label: "الإحصائيات", icon: <BarChart3 size={20} />, path: "/affiliateDashboard/statistics" },
-//     { label: "حسابي", icon: <User size={20} />, path: "/affiliateDashboard/myAccount" },
-//   ];
-
-//   return (
-//     <SidePanel menuItems={menuItems}>
-//             <div className="flex flex-col w-full h-full space-y-4 pb-4 overflow-x-hidden">
-
-//       {/* Table Header */}
-//       <div className="sticky top-0 border-b-[1.5px] border-[#E5B62B] z-10 grid grid-cols-8 gap-4 p-6 bg-gray-50  text-center font-semibold text-[#E5B62B]">
-//   <div>#</div>
-//   <div>كود التخفيض</div>
-//   <div>النماذج المرتبطة</div>
-//   <div>نسبة التخفيض للزبون</div>
-//   <div>نسبة الربح للأقلية</div>
-//   <div>تاريخ التفعيل</div>
-//   <div>تاريخ الانتهاء</div>
-//   <div>الحالة</div>
-// </div>
 
 
-//       {/* Table Body */}
-//       <div className="divide-y divide-gray-200">
-//         {investmentData.map((item) => (
-//           <div key={item.id} className="grid grid-cols-8 gap-4 p-6 hover:bg-gray-50 transition-colors">
-//             <div className="text-center font-semibold text-gray-800">{item.id}</div>
-//             <div className="text-center font-semibold text-gray-800">{item.code}</div>
-//             <div className="text-center text-gray-700">{item.model}</div>
-//             <div className="text-center font-semibold text-gray-800">{item.discountPercentage}</div>
-//             <div className="text-center font-semibold text-gray-800">{item.profitPercentage}</div>
-//             <div className="text-center text-gray-700">{item.activationDate}</div>
-//             <div className="text-center text-gray-700">{item.endDate}</div>
-//             <div className="text-center">
-//               <span className={`font-semibold ${item.statusColor}`}>{item.status}</span>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//       </div>
-//       </SidePanel>
-//   );
-// }
+
+
 // pages/AffiliateDashboard.jsx
 import React, { useState, useEffect } from "react";
 import axiosInstance from "@/utils/axiosInstance"; // ✅ use our configured axios
@@ -139,7 +46,7 @@ export default function AffiliateDashboard() {
     <SidePanel menuItems={menuItems}>
       <div className="flex flex-col w-full h-full space-y-4 pb-4 overflow-x-hidden">
         
-        {/* ✅ Desktop Table */}
+        {/* Desktop Table */}
         <div className="hidden md:block">
           <div className="sticky top-0 border-b-[1.5px] border-[#E5B62B] z-10 grid grid-cols-8 gap-4 p-6 bg-gray-50 text-center font-semibold text-[#E5B62B]">
             <div>#</div>
@@ -178,7 +85,7 @@ export default function AffiliateDashboard() {
           </div>
         </div>
 
-        {/* ✅ Mobile Cards */}
+        {/*  Mobile Cards */}
         <div className="block md:hidden space-y-4 px-2">
           {promoCodes.map((item) => (
             <div
