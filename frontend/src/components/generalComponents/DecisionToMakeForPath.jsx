@@ -21,12 +21,12 @@ const list2 = {
   },
   'dropshipper': {
     'تسوق الان': '/shoppingDropshipper',
-    'تصفح المتجر': '/couturiere/dashboard',
+    'تصفح المتجر': '/shoppingDropshipper',
     'التسجيل في الدروبشيبينغ': '/shoppingDropshipper'
   },
   'couturiere': {
-    'انضم الان': '/couturiere/dashboard',
-    'الدخول للمنصة': '/couturiere/dashboard'
+    'انضم الان': '/MesModels',
+    'الدخول للمنصة': '/MesModels'
   },
   
 };

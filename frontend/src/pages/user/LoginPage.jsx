@@ -150,13 +150,13 @@ const handleSuccessfulLogin = (userRole) => {
       navigate("/shopping");
       break;
     case "couturiere":
-      navigate("/couturiere/dashboard");
+      navigate("/MesModels");
       break;
     case "dropshipper":
       navigate("/shoppingDropshipper");
       break;
     case "affiliate":
-      navigate("/AffiliateDashboard");
+      navigate("/affiliateDashboard/codepromo");
       break;
     default:
       navigate("/");

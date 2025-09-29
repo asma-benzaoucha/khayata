@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { InputField } from "@/components/ui/inputField";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import logo from "../../assets/logobleu.png";
 
 export default function ForgotPassword() {
   const [formData, setFormData] = useState({ email: "" });
@@ -89,34 +90,32 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#F4F3EF] flex flex-col items-center justify-start px-4 pt-8 pb-4">
-      <div className="relative w-full max-w-md flex justify-center items-center mb-4">
-        <h2 className="text-[#E5B62B] text-2xl text-center amiri-bold">نسيت كلمة المرور؟</h2>
-        <ArrowLeft
-          className="absolute left-4 text-[#374151] w-5 h-5 cursor-pointer"
-          onClick={handleBackToLogin}
-        />
-        <div className="fixed top-4 right-0 z-50">
-          <img
-            src="/logo.png"
-            alt="Logo"
-            className="w-[8rem] max-w-full h-auto object-contain"
-          />
-        </div>
+    <div className="login-container">
+      {/* Logo centré avec espace en dessous */}
+      <div className="login-logo">
+        <img src={logo} alt="Logo" />
       </div>
-
-      <div className="bg-white rounded-t-3xl rounded-b-2xl shadow-md w-full max-w-xl h-[70vh] flex flex-col overflow-hidden">
-        <div className="overflow-y-auto px-6 py-6 flex-1" dir="rtl">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <p className="text-center text-[#374151] text-base leading-relaxed">
+      
+      {/* White Card avec titre et icône à l'intérieur */}
+      <div className="login-card">
+        <div className="login-card-content">
+          {/* Header avec bouton de retour et titre à l'intérieur de la carte */}
+          <div className="login-header">
+            <ArrowLeft 
+              className="login-back-button" 
+              onClick={handleBackToLogin}
+            />
+            <h2 className="login-title">نسيت كلمة المرور؟</h2>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="login-form">
+            <p className="login-description">
               أدخل بريدك الإلكتروني وسنرسل لك رمزًا لإعادة تعيين كلمة المرور.
             </p>
 
-            <div className="space-y-2 text-right">
-              <label className="text-sm text-[#374151] amiri-bold">
-                البريد الإلكتروني:
-              </label>
+            <div className="login-input-group">
               <InputField
+                label="البريد الإلكتروني:"
                 type="text" // Important: avoid native HTML validation
                 placeholder="example@gmail.com"
                 value={formData.email}
@@ -125,19 +124,20 @@ export default function ForgotPassword() {
               />
             </div>
 
-            <Button
+            <button
               type="submit"
-              className="w-full h-12 rounded-full text-white font-medium mt-2"
-              style={{ backgroundColor: "#E5B62B" }}
               disabled={!formData.email || isSending}
+              className="login-submit-button"
             >
               {isSending ? "جارٍ الإرسال..." : "إرسال الرمز"}
-            </Button>
+            </button>
 
-            <div className="text-center">
-              <Link to="/login" className="text-[#4A66BD] text-sm underline cursor-pointer">
-                العودة إلى تسجيل الدخول
-              </Link>
+            <div className="login-forgot-password">
+              <span className="login-forgot-link">
+                <Link to="/login">
+                  العودة إلى تسجيل الدخول
+                </Link>
+              </span>
             </div>
           </form>
         </div>
@@ -145,4 +145,3 @@ export default function ForgotPassword() {
     </div>
   );
 }
-
