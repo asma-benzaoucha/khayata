@@ -5,6 +5,7 @@ import secrets, string
 from django.utils import timezone
 import os
 from .managers import CustomUserManager
+from .livraison import  WilayaDelivery
 
 class User(AbstractUser):
     ROLE_CHOICES = [
@@ -53,14 +54,13 @@ class Client (models.Model):
 
 class Affiliate(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    phone_number = models.CharField(max_length=10, blank=True, null=True)
     
-
     
 class Couturiere(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     address = models.TextField()
-    phone_number = models.CharField(max_length=20, blank=False, null=False)  
+    phone_number = models.CharField(max_length=10, blank=False, null=False)  
     is_accepted = models.BooleanField(null=True,blank=True)
     agreed_to_policy = models.BooleanField(default=False)
     refused_at = models.DateTimeField(null=True, blank=True)
@@ -69,30 +69,39 @@ class Couturiere(models.Model):
 class Dropshipper(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     store_link = models.TextField()
-    phone_number = models.CharField(max_length=20, blank=False, null=False)# 
+    phone_number = models.CharField(max_length=10, blank=False, null=False)# 
     is_accepted = models.BooleanField(blank=True, null=True)
     agreed_to_policy = models.BooleanField(default=False)
     refused_at = models.DateTimeField(null=True, blank=True)
 
+
+class DropshipperClients(models.Model):
+    dropshipper = models.ForeignKey(
+        'Dropshipper', 
+        on_delete=models.CASCADE,
+        related_name='clients'
+    )
+    nom_client = models.CharField(max_length=100, blank=False, null=False)
+  
     
+    class Meta:
+        verbose_name = "Client Dropshipper"
+        verbose_name_plural = "Clients Dropshippers"
+       
+    
+    def __str__(self):
+        return f"{self.nom_client}"
 
 
 
-
-
-
+import os, uuid
+from django.utils import timezone
+from django.db import models
 def custom_upload_path(instance, filename):
-    """
-    Génère le chemin final après que l'instance a un ID
-    Format: user_docs/<role>/<nom_base>_<id>.<ext>
-    """
-    if not instance.id:
-        return 'temp_uploads/temp_file'  # Chemin temporaire pour la première sauvegarde
-    
-    role = instance.user.role
+    role = instance.user.role if instance.user else "unknown"
     base, ext = os.path.splitext(filename)
-    return f'user_docs/{role}/{base}_{instance.id}{ext}'
-
+    unique = uuid.uuid4().hex[:8]
+    return f"user_docs/{role}/{base}_{unique}{ext}"
 
 class UserDocuments(models.Model):
     nom = models.FileField(upload_to=custom_upload_path)
@@ -107,18 +116,6 @@ class UserDocuments(models.Model):
 
     class Meta:
         verbose_name_plural = "User Documents"
-
-    def save(self, *args, **kwargs):
-        # Sauvegarde en deux étapes pour avoir l'ID avant le nom final
-        if not self.id:
-            # Première sauvegarde pour obtenir un ID
-            temp_file = self.nom
-            self.nom = None
-            super().save(*args, **kwargs)
-            self.nom = temp_file
-            kwargs.pop('force_insert', None)  # Important pour éviter les doublons
-        
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Document #{self.id}"

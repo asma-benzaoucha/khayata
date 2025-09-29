@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState,useEffect } from "react";
 import ContainerPagesAdmin from "../../components/AdminComponents/ContainerPagesAdmin";
 import "../../style/AdminStyle/Dashboard.css";
 import Courbe from "@/components/AdminComponents/Courbe";
@@ -9,6 +9,7 @@ import AddModelPopup from "../../components/AdminComponents/addModelPopup";
 import ModifyModelPopup from "../../components/AdminComponents/ModifyModel";
 import "../../style/AdminStyle/ModelPage.css"
 import Vide from "../../components/generalComponents/Vide"
+import useErreur401Handler from '../../components/generalComponents/Erreur401Handle'
 
 function ModelPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,6 +19,8 @@ function ModelPage() {
   const [namadijData, setNamadijData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+    const { handle401Error } = useErreur401Handler();
+  
   const [verificationPopup, setVerificationPopup] = useState({
     show: false,
     message: ""
@@ -85,10 +88,13 @@ function ModelPage() {
         }));
         
         setNamadijData(transformedData);
-      } else if (response.status === 401) {
-        setError('غير مصرح به. يرجى تسجيل الدخول مرة أخرى.');
-        window.location.href = '/admin/login';
-      } else {
+      }  else if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchModelsData ();
+        }
+      }else {
         console.error('Erreur lors de la récupération des modèles');
         setError('خطأ في تحميل البيانات');
       }

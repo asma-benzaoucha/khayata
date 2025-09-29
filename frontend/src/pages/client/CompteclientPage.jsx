@@ -10,7 +10,7 @@ export default function CompteclientPage(){
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    navigate("/loginClient");
+    navigate("/login");
   };
 
   return(
@@ -22,8 +22,8 @@ export default function CompteclientPage(){
             <h1>الملف الشخصي</h1>
           </section>
           
-          <ChangeName path='/loginClient' align="center" />
-          <ChangeNameComp path='/loginClient'/>
+          <ChangeName path='/login' align="center" />
+          <ChangeNameComp path='/login'/>
           
           <a href="#" onClick={handleLogout} style={{
             display: 'block',

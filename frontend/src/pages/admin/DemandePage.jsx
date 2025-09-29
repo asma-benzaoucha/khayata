@@ -5,6 +5,7 @@ import Popup from "../../components/generalComponents/Popup";
 import donepopup from "../../assets/icons/donepopup.png";
 import "../../style/AdminStyle/DemandePage.css";
 import Vide from "../../components/generalComponents/Vide";
+import useErreur401Handler from '../../components/generalComponents/Erreur401Handle'
 
 // Composant SearchBar (inchangé)
 const SearchBar = ({ onSearch, placeholder = "ابحث باسم المستخدم، الولاية أو النموذج..." }) => {
@@ -250,6 +251,7 @@ const transformApiDataToCardFormat = (apiOrders) => {
         originalId: order.id,
         typecommande: order.typecommande,
         nameuser: order.user.full_name,
+        nameclientdropshipper:order.dropshipper_client?.nom_client || null,
         codemodel: order.fashion_model?.code || "غير محدد",
         codecommande: order.codecommande || order.code_order,
         typeuser: order.user.role === "client" ? "عميل" : 
@@ -341,6 +343,7 @@ const transformApiDataToCardFormat = (apiOrders) => {
       deliveryprice :order.wilaya.delivery_price,
       typecommande: order.typecommande,
       nameuser: order.user?.full_name || "غير معروف",
+      nameclientdropshipper:order.dropshipper_client?.nom_client || null,
       codemodel: order.fashion_model?.code || null,
       codecommande: order.codecommande || order.codeorder || "غير محدد",
       typeuser: order.user?.role === "client" ? "عميل" : 
@@ -527,6 +530,7 @@ function Finish({ orders }) {
 }
 
 export default function DemandePage() {
+  const { handle401Error } = useErreur401Handler();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -558,10 +562,14 @@ export default function DemandePage() {
             'Content-Type': 'application/json',
           },
         });
-
-        if (!response.ok) {
-          throw new Error(`Erreur API: ${response.status}`);
+if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchOrders ();
         }
+      }
+     
 
         const data = await response.json();
         const transformedOrders = transformApiDataToCardFormat(data.orders);
@@ -591,8 +599,12 @@ export default function DemandePage() {
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`Erreur API: ${response.status}`);
+      if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return executeRefuseAction();
+        }
       }
 
       setOrders(prevOrders => 
@@ -712,11 +724,20 @@ const handleStatusChange = useCallback(async (uniqueId, originalId, orderType, s
           }
         );
 
+         if (verifyResponse.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return verifyResponse ();
+        }
+      }
         if (!verifyResponse.ok) {
           const errorData = await verifyResponse.json().catch(() => ({}));
           console.error('Erreur de vérification:', verifyResponse.status, errorData);
           throw new Error(`Erreur de vérification: ${verifyResponse.status}`);
         }
+       
+      
 
         const verificationResult = await verifyResponse.json();
         console.log("Résultat de vérification:", verificationResult);
@@ -744,6 +765,14 @@ const handleStatusChange = useCallback(async (uniqueId, originalId, orderType, s
           },
         }
       );
+
+       if (doneResponse.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return doneResponse();
+        }
+      }
 
       if (doneResponse.ok) {
         setOrders(prevOrders => 

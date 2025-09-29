@@ -16,7 +16,8 @@ export default function CommandCard({
   status = [],
   pdfFiles = [],
   variants = [],
-  isCustom = false
+  isCustom = false,
+  dropshipperClientName = null 
 }) { 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 480);
   const [showPopup, setShowPopup] = useState(false);
@@ -68,12 +69,22 @@ export default function CommandCard({
       <div className="sidedroit">
         <div className="line1"> 
           <div className="namecommand elemntcard"> 
+          
             {namecommand}
             
-            {isCustom &&(<div className="specialtext"> 
+            { isCustom &&(<div className="specialtext"> 
               مخصص
             </div> )}
+                       { !isMobile && dropshipperClientName && (
+      <div className="dropshipper-name" style={{fontSize: "1rem", color: "#666", marginTop: "5px",marginRight:"50px"}}>
+      مستقبل الطلبية: {dropshipperClientName}
+      </div>
+    )}
+      
+        
+        
           </div> 
+    
           
           {/* Sur mobile: photo et status sur la même ligne */}
           {isMobile ? (
@@ -105,7 +116,17 @@ export default function CommandCard({
                     onClose={() => setShowPopup(false)}
                     onConfirm={() => {
                       setShowPopup(false);
-                      navigate('/mycommands');
+                        const userRole = localStorage.getItem('user.role');
+    
+    // Navigation conditionnelle selon le rôle
+    if (userRole === 'dropshipper') {
+      navigate('/mycommandsdropshipper');
+    } else if (userRole === 'client') {
+      navigate('/mycommands');
+    } else {
+      // Cas par défaut si le rôle n'est pas reconnu
+      navigate('/mycommands');
+    }
                     }}
                   />
                 )}
@@ -149,7 +170,11 @@ export default function CommandCard({
             </>
           )}
         </div> 
-
+                      { isMobile && dropshipperClientName && (
+      <div className="dropshipper-name" >
+      مستقبل الطلبية: {dropshipperClientName}
+      </div>
+    )}
         <div className="line2"> 
           <div className="datecommand elemntcard">
             <img src={date[1]} alt="datecommand" />

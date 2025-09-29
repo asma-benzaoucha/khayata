@@ -1,27 +1,26 @@
 import '../../style/landingStyle/C1landing.css';
 import down from '../../assets/icons/down.png';
 import pub from "../../assets/icons/publ.png";
-import { useNavigate } from "react-router-dom";
-import { handleNavigationWithAuth } from "../../apimanagement/authUtils";
+import useNavigationDecision from '../generalComponents/DecisionToMakeForPath';
+
 
 export default function C1landing() {
-  const navigate = useNavigate();
+    const handleNavigation = useNavigationDecision();
 
-  const handleProtectedNavigation = async (path) => {
-    try {
-      await handleNavigationWithAuth(navigate, path, false);
-    } catch (error) {
-      console.error('Navigation error:', error);
-    }
+   const handleButtonClick = (buttonName) => {
+    handleNavigation(buttonName);
   };
+
+
   
-  const goToShoppingOrLogin = () => {
-    handleProtectedNavigation("/shopping");
-  }
+ 
+ 
+    
+   
+
   
-  const goToSpecialOrLogin = () => {
-    handleProtectedNavigation("/special");
-  }
+  
+  
 
   // Fonction pour faire défiler la page vers le bas
   const scrollDown = () => {
@@ -39,8 +38,8 @@ export default function C1landing() {
           اختر من مجموعة حصرية من التصاميم الجاهزة أو اطلب تصميماً مخصصاً يناسب ذوقك.
         </p>
         <div className="landing-buttons">
-          <button className="shop-button" onClick={goToShoppingOrLogin}>تسوق الآن</button>
-          <button className="custom-button" onClick={goToSpecialOrLogin}>تصميم خاص</button>
+          <button className="shop-button" onClick={() => handleButtonClick('تسوق الان')}>تسوق الآن</button>
+          <button className="custom-button" onClick={() => handleButtonClick('تصميم خاص')} >تصميم خاص</button>
         </div>
       </div>
    

@@ -16,6 +16,7 @@ export default function RegistrationClient() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
+    
     password: "",
     confirmPassword: "",
   });
@@ -36,6 +37,56 @@ export default function RegistrationClient() {
       document.body.style.overflow = "auto";
     };
   }, []);
+
+  const [emailChecking, setEmailChecking] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
+
+  const checkEmailExists = async (email) => {
+    if (!email) {
+      setEmailExists(false);
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailExists(false);
+      return false;
+    }
+
+    setEmailChecking(true);
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:8000/api/checkIfEmailExist/${encodeURIComponent(email)}`
+      );
+      
+      console.log("Réponse API vérification email:", response.data);
+      
+      setEmailExists(response.data.exists);
+      
+      // Mettre à jour les erreurs
+      if (response.data.exists) {
+        setErrors(prev => ({
+          ...prev,
+          email: "البريد الإلكتروني موجود مسبقاً"
+        }));
+      } else {
+        // Supprimer l'erreur d'email existant si elle était présente
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.email;
+          return newErrors;
+        });
+      }
+      
+      return response.data.exists;
+    } catch (error) {
+      console.error("Erreur de vérification d'email:", error);
+      setEmailExists(false);
+      return false;
+    } finally {
+      setEmailChecking(false);
+    }
+  };
 
   const validateFieldSync = (field, value, currentFormData) => {
     let error = null;
@@ -91,6 +142,15 @@ export default function RegistrationClient() {
       const newFormData = { ...prev, [field]: value };
       let newErrors = { ...errors };
 
+      // Si l'email change, réinitialiser la vérification
+      if (field === "email") {
+        setEmailExists(false);
+        // Supprimer l'erreur d'email existant si elle était présente
+        if (newErrors.email === "البريد الإلكتروني موجود مسبقاً") {
+          delete newErrors.email;
+        }
+      }
+
       const fieldError = validateFieldSync(field, value, newFormData);
       if (fieldError) {
         newErrors[field] = fieldError;
@@ -119,13 +179,23 @@ export default function RegistrationClient() {
     });
   };
 
+  // Fonction utilitaire pour vérifier si une erreur existe
+  const hasError = (error) => {
+    if (!error) return false;
+    if (typeof error === 'string') return error.trim() !== "";
+    if (Array.isArray(error)) return error.length > 0;
+    if (typeof error === 'object') return Object.keys(error).length > 0;
+    return false;
+  };
+
   const isFormValid = () => {
     const requiredFields = ["fullName", "email", "password", "confirmPassword"];
     const allFieldsFilled = requiredFields.every((field) => formData[field].trim() !== "");
-    const hasActiveErrors = Object.values(errors).some((error) => error && error.trim() !== "");
+    const hasActiveErrors = Object.values(errors).some(hasError);
     const termsAccepted = acceptTerms;
+    const emailAvailable = !emailExists;
 
-    return allFieldsFilled && termsAccepted && !hasActiveErrors && !isSubmitting;
+    return allFieldsFilled && termsAccepted && !hasActiveErrors && !isSubmitting && emailAvailable;
   };
 
   const handleResendVerification = async () => {
@@ -216,6 +286,14 @@ export default function RegistrationClient() {
     setSubmitError("");
     setSubmitSuccess("");
 
+    // Vérifier d'abord si l'email existe
+    const emailAlreadyExists = await checkEmailExists(formData.email);
+    
+    if (emailAlreadyExists) {
+      setIsSubmitting(false);
+      return;
+    }
+
     const fieldsToValidate = ["fullName", "email", "password", "confirmPassword"];
     let currentErrors = {};
 
@@ -261,21 +339,21 @@ export default function RegistrationClient() {
       setSubmitSuccess("تم إنشاء الحساب بنجاح! تحقق من بريدك الإلكتروني");
       setResendCount(0);
       setLastResendTime(null);
-      setAcceptTerms(false);
       setErrors({});
 
     } catch (error) {
-      console.error(error);
+      console.error("Erreur détaillée:", error);
       if (error.response) {
+        console.error("Réponse d'erreur:", error.response.data);
         const { status, data } = error.response;
         switch (status) {
           case 400:
             if (data.email) {
-              setErrors((prev) => ({ ...prev, email: data.email }));
+              setErrors((prev) => ({ ...prev, email: Array.isArray(data.email) ? data.email[0] : data.email }));
             } else if (data.password) {
-              setErrors((prev) => ({ ...prev, password: data.password }));
+              setErrors((prev) => ({ ...prev, password: Array.isArray(data.password) ? data.password[0] : data.password }));
             } else if (data.agreed_to_policy) {
-              setErrors((prev) => ({ ...prev, terms: data.agreed_to_policy }));
+              setErrors((prev) => ({ ...prev, terms: Array.isArray(data.agreed_to_policy) ? data.agreed_to_policy[0] : data.agreed_to_policy }));
             } else {
               setSubmitError("بيانات غير صحيحة. يرجى المراجعة والمحاولة مرة أخرى");
             }
@@ -298,18 +376,13 @@ export default function RegistrationClient() {
 
   return (
     <div className="registration-container">
-      {/* Logo centré avec espace en dessous */}
       <div className="registration-logo">
         <img src={logo} alt="Logo" />
       </div>
       
-      {/* White Card avec titre et icône à l'intérieur */}
       <div className="registration-card">
         <div className="registration-card-content">
-          {/* Header avec bouton de retour et titre à l'intérieur de la carte */}
-          <div className="registration-back-container">
-            <ArrowLeft className="registration-back-button" onClick={() => navigate(-1)} />
-          </div>
+          
           <div className="registration-header">
             <h2 className="registration-title">تسجيل حساب زبون</h2>
           </div>
@@ -329,8 +402,10 @@ export default function RegistrationClient() {
                 type="email"
                 placeholder="example@gmail.com"
                 value={formData.email}
+                onBlur={() => checkEmailExists(formData.email)}
                 onChange={(val) => handleInputChange("email", val)}
                 error={errors.email}
+                loading={emailChecking}
               />
               
               <PasswordField
@@ -370,10 +445,10 @@ export default function RegistrationClient() {
                 className="registration-checkbox"
               />
               <label className="registration-terms-label">
-  أوافق على <span className="registration-terms-link">
-    <Link to="/rules">شروط الاستخدام وسياسة الخصوصية</Link>
-  </span>
-</label>
+                أوافق على <span className="registration-terms-link">
+                  <Link to="/rules">شروط الاستخدام وسياسة الخصوصية</Link>
+                </span>
+              </label>
             </div>
             
             {errors.terms && <p className="registration-error-text">{errors.terms}</p>}
@@ -389,7 +464,7 @@ export default function RegistrationClient() {
             <p className="registration-login-text">
               هل لديك حساب بالفعل؟{" "}
               <span className="registration-login-link">
-                <Link to="/loginClient">تسجيل الدخول</Link>
+                <Link to="/login">تسجيل الدخول</Link>
               </span>
             </p>
           </form>

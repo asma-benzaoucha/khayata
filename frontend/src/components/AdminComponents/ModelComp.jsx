@@ -9,6 +9,7 @@ import Popup from "../../components/generalComponents/Popup"; // Import du compo
 import areyousure from "../../assets/areyousure.png"; // Import de l'image pour le popup
 import "../../style/AdminStyle/ModelComp.css";
 import { WidthFull } from "@mui/icons-material";
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 
 export default function ModelComp({
   nommodel = "",
@@ -29,6 +30,7 @@ export default function ModelComp({
   const [isImagePopupOpen, setIsImagePopupOpen] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [showRejectPopup, setShowRejectPopup] = useState(false); // État pour afficher la popup de confirmation
+  const { handle401Error } = useErreur401Handler();
 
   const getStatusStyle = (status) => {
     switch (status) {
@@ -105,14 +107,21 @@ export default function ModelComp({
         },
       });
 
+
+ if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleConfirmReject();
+        }
+      }
+      else 
       if (response.ok) {
         console.log("Modèle refusé avec succès");
         if (onReject) {
           onReject();
         }
-      } else if (response.status === 401) {
-        console.error("Non autorisé - token peut-être expiré");
-      } else {
+      }  else {
         console.error("Échec du refus du modèle");
       }
     } catch (error) {

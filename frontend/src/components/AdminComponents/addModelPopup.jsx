@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Toast from "../../components/generalComponents/Toast";
 import "../../style/AdminStyle/addNewAffiliate.css";
 import InputField from '../../components/generalComponents/Inputfield';
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 
 export default function AddModelPopup({ isOpen, onClose, onSuccess }) {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -10,6 +11,8 @@ export default function AddModelPopup({ isOpen, onClose, onSuccess }) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [earthquake, setEarthquake] = useState(false);
+
+  const { handle401Error } = useErreur401Handler();
   
   const typeChoices = [
     { value: 'femme', label: 'نساء' },
@@ -256,12 +259,6 @@ export default function AddModelPopup({ isOpen, onClose, onSuccess }) {
     
     try {
       const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setErrorMessage("يجب تسجيل الدخول أولاً");
-        setShowErrorToast(true);
-        setLoading(false);
-        return;
-      }
 
       const formData = new FormData();
       
@@ -299,7 +296,14 @@ export default function AddModelPopup({ isOpen, onClose, onSuccess }) {
       });
 
       const result = await response.json();
-
+ if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleSubmit();
+        }
+      }
+      else 
       if (response.ok) {
         console.log("Modèle ajouté avec succès:", result);
         
@@ -315,10 +319,7 @@ export default function AddModelPopup({ isOpen, onClose, onSuccess }) {
         }, 2000);
         return result;
         
-      } else if (response.status === 401) {
-        setErrorMessage("انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى");
-        setShowErrorToast(true);
-      } else if (result.error) {
+      }  else if (result.error) {
         setErrorMessage(result.error);
         setShowErrorToast(true);
       } else {

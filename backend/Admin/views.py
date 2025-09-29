@@ -181,6 +181,17 @@ def get_all_orders(request):
                     'email': order.user.email,
                     'full_name': order.user.full_name
                 } if order.user else None,
+                
+                'dropshipper_client': {
+        'id': order.dropshipper_client.id,
+        'nom_client': order.dropshipper_client.nom_client,
+        'dropshipper': {
+            'id': order.dropshipper_client.dropshipper.id,
+            'store_link': order.dropshipper_client.dropshipper.store_link,
+            'phone_number': order.dropshipper_client.dropshipper.phone_number
+        }
+    } if order.dropshipper_client else None, 
+                
                 'state': order.state,
                 'address': order.address,
                 'wilaya': {
@@ -195,8 +206,11 @@ def get_all_orders(request):
                 'fashion_model': {
                     'name': order.fashion_model.name,
                     'code': order.fashion_model.code,
-                    'price_per_piece_for_client': float(order.fashion_model.price_per_piece_for_client),
-                    'images': images_urls
+'price_per_piece_for_client': float(
+            order.fashion_model.price_per_piece_for_dropshipper 
+            if order.dropshipper_client 
+            else order.fashion_model.price_per_piece_for_client
+        ),                    'images': images_urls
                 },
                 'created_at': order.created_at
             })
@@ -455,7 +469,6 @@ def refuse_dropshipper(request, email):
         
         # Vérifier les conditions requises
         if (user.email_verification_token is not None or 
-            user.is_active is not False or
             not hasattr(user, 'dropshipper') or
             user.dropshipper.is_accepted is not None):
             
@@ -1049,6 +1062,9 @@ def get_most_active_affiliate(request):
                     state='done'
                 ).count()
                 total_orders += orders_count
+                
+            if total_orders == 0:
+                 continue
             
             # Récupérer le numéro de téléphone de l'affilié
             try:
@@ -1107,7 +1123,7 @@ def add_new_affiliate(request):
         # Validation des données requises
         required_fields = ['full_name', 'email', 'password', 
                           'promo_code', 'profit_percentage', 'discount_percentage',
-                          'start_date', 'expiration_date', 'model_codes']
+                          'start_date', 'expiration_date', 'model_codes','phoneNumber']
         
         for field in required_fields:
             if field not in data:
@@ -1198,6 +1214,7 @@ def add_new_affiliate(request):
         # Créer le profil affilié
         affiliate = Affiliate.objects.create(
             user=user,
+            phone_number=data["phoneNumber"]
         )
 
         # Créer le code promo
@@ -3034,7 +3051,10 @@ def get_total_benefit_from_saling_products_personalized_standard_in_month(reques
             total_quantity += variant.quantity
         
         # Calculer le prix unitaire après réduction si promo code existe
-        base_price = order.fashion_model.price_per_piece_for_client
+        if order.dropshipper_client:
+          base_price = order.fashion_model.price_per_piece_for_dropshipper
+        else:
+          base_price = order.fashion_model.price_per_piece_for_client
         
         if order.promo_code:
             discount_percentage = (order.promo_code.discount_percentage + order.promo_code.profit_percentage )/ 100

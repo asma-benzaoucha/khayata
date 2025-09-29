@@ -6,6 +6,7 @@ import "../../style/AdminStyle/ParametreSite.css";
 import ChangePassword from '../../components/generalComponents/ChangePassword';
 import ChangegroupsLinks from "../../components/AdminComponents/ChangegroupsLinks";
 import Wilayafield from "../../components/AdminComponents/Wilayafield";
+import useErreur401Handler from '../../components/generalComponents/Erreur401Handle'
 
 // Composant pour les paramètres de livraison
 function ParametresLivraison() {
@@ -17,6 +18,8 @@ function ParametresLivraison() {
   const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
   const initialLoad = useRef(true);
+  const { handle401Error } = useErreur401Handler();
+  
 
   // Fonction pour récupérer le token
   const getToken = () => {
@@ -49,10 +52,7 @@ function ParametresLivraison() {
     const fetchWilayas = async () => {
       const token = getToken();
       
-      if (!token || isTokenExpired(token)) {
-        navigate("/admin/login");
-        return;
-      }
+     
 
       try {
         setLoading(true);
@@ -64,9 +64,13 @@ function ParametresLivraison() {
         });
 
         if (response.status === 401) {
-          navigate("/admin/login");
-          return;
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchWilayas();
         }
+      }
+      else
 
         if (!response.ok) {
           throw new Error("Erreur lors du chargement des wilayas");
@@ -160,9 +164,13 @@ function ParametresLivraison() {
       });
 
       if (response.status === 401) {
-        navigate("/admin/login");
-        return;
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleSubmit();
+        }
       }
+      else
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

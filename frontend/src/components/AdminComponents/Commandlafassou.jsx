@@ -4,6 +4,7 @@ import FasouCard from "./FassouCard";
 import '../../style/AdminStyle/FassouCard.css'
 import Addfassou from "./Addfassou"; // Importez le composant Addfassou
 import Vide from "../../components/generalComponents/Vide"
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 
 export default function Commandlafassou() {
   const [orders, setOrders] = useState([]);
@@ -11,6 +12,7 @@ export default function Commandlafassou() {
   const [error, setError] = useState(null);
   const [showPopup, setShowPopup] = useState(false); // État pour contrôler l'affichage du popup
   const navigate = useNavigate();
+  const { handle401Error } = useErreur401Handler();
 
   // Fonction pour récupérer les commandes
   const fetchOrderData = async () => {
@@ -18,11 +20,7 @@ export default function Commandlafassou() {
       // Récupérer le token depuis le stockage local
       const accessToken = localStorage.getItem("accessToken");
       
-      if (!accessToken) {
-        // Rediriger vers la page de login si le token n'existe pas
-        navigate("/admin/login");
-        return;
-      }
+      
 
       const response = await fetch("http://127.0.0.1:8000/adminapi/getInfoCommandeFassou", {
         method: "GET",
@@ -32,12 +30,14 @@ export default function Commandlafassou() {
         },
       });
 
-      if (response.status === 401) {
-        // Token invalide ou expiré, rediriger vers le login
-        localStorage.removeItem("accessToken");
-        navigate("/admin/login");
-        return;
+       if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchOrderData();
+        }
       }
+      else
 
       if (!response.ok) {
         throw new Error(`Erreur HTTP: ${response.status}`);

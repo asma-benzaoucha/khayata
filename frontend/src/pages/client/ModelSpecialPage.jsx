@@ -8,7 +8,7 @@ import remove from '../../assets/icons/remove.png';
 import "../../style/FormAcheterStyle/FormAcheter.css";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import donepopup from "../../assets/icons/donepopup.png";
-import api from '../../apimanagement/api'; 
+
 
 const wilayas = [
   "أدرار", "الشلف", "الأغواط", "أم البواقي", "باتنة", "بجاية", "بسكرة", "بشار",
@@ -252,14 +252,22 @@ function ModelSpecialPage() {
       size: file.size
     })));
     
-    // Envoyer la requête à l'API
-    const response = await api.withAuth(true, true).post('/clientapi/specialcommand/', formData, {
+
+const token = localStorage.getItem("accessToken");
+  
+
+    const response = await fetch(`http://127.0.0.1:8000/clientapi/specialcommand/`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData)
     });
     
-    console.log('Commande créée avec succès:', response.data);
+    const data = await response.json();
+    
+    console.log('Commande créée avec succès:', data);
     setShowPopup(true);
     
   } catch (error) {

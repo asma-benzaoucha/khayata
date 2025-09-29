@@ -25,6 +25,7 @@ export default function DemandeCard({
   deliveryprice,
   pdfFiles,
   profit_percentage,
+  nameclientdropshipper=null,
   onStatusChange
 }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -112,6 +113,16 @@ export default function DemandeCard({
             >
               {typeuser}
             </span>
+
+{ nameclientdropshipper !=null &&(
+<span 
+              className="userType" 
+              style={getStatusStyle(typeuser)}
+            >
+              اسم المشتري : {nameclientdropshipper}
+            </span>
+)}
+           
           </div>
           
           {isCustomcommand && (

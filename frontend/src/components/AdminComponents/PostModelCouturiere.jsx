@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Toast from "../../components/generalComponents/Toast";
 import "../../style/AdminStyle/addNewAffiliate.css";
 import InputField from '../../components/generalComponents/Inputfield';
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 
 function PostModelCouturiere({ isOpen, onClose, modelData, onSuccess }) {
-  const navigate = useNavigate();
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [errorDetails, setErrorDetails] = useState(""); // Nouveau state pour les détails d'erreur
+  const [errorDetails, setErrorDetails] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [earthquake, setEarthquake] = useState(false);
@@ -18,6 +17,8 @@ function PostModelCouturiere({ isOpen, onClose, modelData, onSuccess }) {
   ];
   const formRef = useRef(null);
   const firstErrorRef = useRef(null);
+  const { handle401Error } = useErreur401Handler();
+  
 
   const [form, setForm] = useState({
     
@@ -274,13 +275,7 @@ function PostModelCouturiere({ isOpen, onClose, modelData, onSuccess }) {
   
   try {
     const token = localStorage.getItem('accessToken');
-    if (!token) {
-      setErrorMessage("يجب تسجيل الدخول أولاً");
-      setErrorDetails("Token d'authentification manquant");
-      setShowErrorToast(true);
-      setLoading(false);
-      return;
-    }
+    
 
     const formData = new FormData();
     if (!modelData.codemodel) {
@@ -400,10 +395,14 @@ function PostModelCouturiere({ isOpen, onClose, modelData, onSuccess }) {
           details: result.details || result
         });
         
-        if (response.status === 401) {
-          setErrorMessage("انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى");
-          setErrorDetails("Token expiré ou invalide");
-        } else if (result.error) {
+         if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleSubmit();
+        }
+      }
+      else if (result.error) {
           setErrorMessage(result.error || "حدث خطأ أثناء قبول النموذج");
           setErrorDetails(JSON.stringify(result.details || result, null, 2));
         } else {
@@ -440,7 +439,7 @@ function PostModelCouturiere({ isOpen, onClose, modelData, onSuccess }) {
 
   return (
     <div className="popup-overlay" onClick={handleClose}>
-      <div className={`popup-content add-affiliate-popup ${earthquake ? 'earthquake' : ''}`} onClick={(e) => e.stopPropagation()} ref={formRef}> ref={formRef} style={{minWidth:"0", width:"100%"}}
+      <div className={`popup-content add-affiliate-popup ${earthquake ? 'earthquake' : ''}`} onClick={(e) => e.stopPropagation()} ref={formRef}  style={{minWidth:"0", width:"100%"}}>
         <div className="popup-header2">
           <h2>قبول نموذج: {modelData.nommodel}</h2>
           <button className="close-btn" onClick={handleClose}>×</button>

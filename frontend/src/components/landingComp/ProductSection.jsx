@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { handleNavigationWithAuth } from "../../apimanagement/authUtils";
 import api from "../../apimanagement/api";
 import "../../style/landingStyle/ProductSection.css";
+import useNavigationDecision from '../generalComponents/DecisionToMakeForPath';
 
 // Icônes de flèche
 const ArrowRight = () => (
@@ -18,6 +19,11 @@ const ArrowLeft = () => (
 );
 
 function ProductImageSlider({ images, isTopSeller }) {
+     const handleNavigation = useNavigationDecision();
+    
+      const handleButtonClick = (buttonName) => {
+      handleNavigation(buttonName);
+    };
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const goToPrevious = () => {
@@ -75,6 +81,12 @@ function ProductImageSlider({ images, isTopSeller }) {
 }
 
 export default function ProductSection() {
+
+   const handleNavigation = useNavigationDecision();
+  
+     const handleButtonClick = (buttonName) => {
+      handleNavigation(buttonName);
+    };
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -87,17 +99,8 @@ export default function ProductSection() {
     }
   };
 
-  const handleDiscoverMore = () => {
-    handleProtectedNavigation("/shopping");
-  };
+ 
 
-  const handleCustomDesign = () => {
-    handleProtectedNavigation("/special");
-  };
-
-  const handleBrowseAll = () => {
-    handleProtectedNavigation("/shopping");
-  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -145,7 +148,7 @@ export default function ProductSection() {
   }
 
   // Si le chargement est terminé mais il n'y a pas de produits
-  if (!loading && products.length === 0) {
+  if (!loading && products.length < 2) {
     return null; // Ne rien afficher
   }
 
@@ -181,7 +184,7 @@ export default function ProductSection() {
                       <span className="shopping-size-item">غير متوفر</span>
                     )}
                   </p>
-                  <button className="shopping-buy-btn" onClick={handleDiscoverMore}>
+                  <button className="shopping-buy-btn" onClick={() => handleButtonClick("اكتشف المزيد")}>
                     اكتشف المزيد
                   </button>
                 </div>
@@ -192,15 +195,15 @@ export default function ProductSection() {
       </section>
 
       <section className="product-section">
-        <h2 className="section-title">لم تَجِد ما تبحث عنه؟</h2>
+        <h2 className="section-title" >لم تَجِد ما تبحث عنه؟</h2>
         <p className="section-subtitle">
           اطلب تصميما مخصصا بالكامل يناسب ذوقك و مقاساتك الخاصة
         </p>
         <div className="notfound-buttons">
-          <button className="notfound-btn filled" onClick={handleCustomDesign}>
+          <button className="notfound-btn filled" onClick={() => handleButtonClick("تصميم خاص")}>
             اطلب تصميم مخصص
           </button>
-          <button className="notfound-btn outlined" onClick={handleBrowseAll}>
+          <button className="notfound-btn outlined" onClick={() => handleButtonClick("اكتشف المزيد")} >
             تصفّح كامل العرض
           </button>
         </div>

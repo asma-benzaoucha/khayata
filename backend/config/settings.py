@@ -40,7 +40,6 @@ ALLOWED_HOSTS = ["*"]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
     "http://127.0.0.1:5173",
-    "http://192.168.0.221:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -57,6 +56,7 @@ INSTALLED_APPS = [
     'Backendkadi',
     'Client',
     'Admin',
+    'Dropshipper',
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
@@ -183,8 +183,8 @@ from datetime import timedelta
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=6),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=2),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),

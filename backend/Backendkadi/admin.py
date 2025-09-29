@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Client, FashionModel, CustomOrder, PromoCode ,WilayaDelivery,ModelImage,Order,User,Couturiere,Dropshipper,Client,CustomOrderImage,Affiliate,UserDocuments,StockVariantForCommands,StockVariantForFashionModels
+from .models import Client, FashionModel, CustomOrder, PromoCode ,WilayaDelivery,ModelImage,Order,User,Couturiere,Dropshipper,Client,CustomOrderImage,Affiliate,UserDocuments,StockVariantForCommands,StockVariantForFashionModels,DropshipperClients
 
 admin.site.register(Client)
 admin.site.register(FashionModel)
@@ -16,6 +16,9 @@ admin.site.register(Dropshipper)
 admin.site.register(CustomOrderImage)
 admin.site.register(Affiliate)
 admin.site.register(UserDocuments)
+admin.site.register(DropshipperClients)
+
+
 
 
 

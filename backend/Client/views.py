@@ -17,7 +17,7 @@ from rest_framework import viewsets
 
 
 from Backendkadi.models.commandes import  CustomOrder 
-from Backendkadi.models.user import  User ,Client
+from Backendkadi.models.user import  User ,Client,Dropshipper,DropshipperClients
 from Backendkadi.models.commandes import Order
 from Backendkadi.models.modeles import  FashionModel
 from Backendkadi.models.commandes import CustomOrder,Order
@@ -126,39 +126,148 @@ def client_signup(request):
 
 
 
-#get all models accepted from the store 
+
+
 class FashionModelListView(generics.ListAPIView):
-    serializer_class = FashionModelSerializer2
+  
+  serializer_class = FashionModelSerializer2
+  permission_classes = [IsAuthenticated] 
+  
+    
+  def get_queryset(self):
+    user = self.request.user
+    if user.role != 'dropshipper' and user.role != 'client' and user.role != 'admin':
+        return Response({"error": "Accès non autorisé"}, status=403)
+    
     queryset = FashionModel.objects.filter(state='accepted')
     
+    
+    print(f"User: {user}, Authenticated: {user.is_authenticated}, Role: {getattr(user, 'role', 'None')}")
+    
+    if user.is_authenticated and user.role == 'dropshipper':
+        print("Applying dropshipper filter: price > 0")
+        queryset = queryset.filter(price_per_piece_for_dropshipper__gt=0)
+        print(f"Filtered queryset count after price filter: {queryset.count()}")
+        
+        # Filtrer les modèles où min_pieces_for_dropshipper <= quantité totale des variantes
+        filtered_models = []
+        for model in queryset:
+            total_quantity = model.total_pieces()  # Utilise la méthode existante du modèle
+            if model.min_pieces_for_dropshipper <= total_quantity:
+                filtered_models.append(model.id)
+        
+        # Refiltrer le queryset avec les IDs valides
+        queryset = queryset.filter(id__in=filtered_models)
+        print(f"Filtered queryset count after quantity check: {queryset.count()}")
+    
+    return queryset
     
     
     
 #get all women models accepted from the store 
 class FashionModelFemmeListView(generics.ListAPIView):
-    serializer_class = FashionModelSerializer2
+  serializer_class = FashionModelSerializer2
+  permission_classes = [IsAuthenticated] 
     
-    def get_queryset(self):
-        # Filtrer seulement les modèles de type "femme" avec état "accepted"
-        return FashionModel.objects.filter(type='femme', state='accepted')
-
+    
+  def get_queryset(self):
+    user = self.request.user
+    if user.role != 'dropshipper' and user.role != 'client':
+        return Response({"error": "Accès non autorisé"}, status=403)
+    
+    queryset = FashionModel.objects.filter(type='femme', state='accepted')
+    
+    
+    print(f"User: {user}, Authenticated: {user.is_authenticated}, Role: {getattr(user, 'role', 'None')}")
+    
+    if user.is_authenticated and user.role == 'dropshipper':
+        print("Applying dropshipper filter: price > 0")
+        queryset = queryset.filter(price_per_piece_for_dropshipper__gt=0)
+        print(f"Filtered queryset count after price filter: {queryset.count()}")
+        
+        # Filtrer les modèles où min_pieces_for_dropshipper <= quantité totale des variantes
+        filtered_models = []
+        for model in queryset:
+            total_quantity = model.total_pieces()  # Utilise la méthode existante du modèle
+            if model.min_pieces_for_dropshipper <= total_quantity:
+                filtered_models.append(model.id)
+        
+        # Refiltrer le queryset avec les IDs valides
+        queryset = queryset.filter(id__in=filtered_models)
+        print(f"Filtered queryset count after quantity check: {queryset.count()}")
+    
+    return queryset
+    
+   
 
 #get all homme models accepted from the store 
 class FashionModelHommeListView(generics.ListAPIView):
-    serializer_class = FashionModelSerializer2
+  serializer_class = FashionModelSerializer2
+  permission_classes = [IsAuthenticated]
     
-    def get_queryset(self):
-        # Filtrer seulement les modèles de type "homme" avec état "accepted"
-        return FashionModel.objects.filter(type='homme', state='accepted')
+    
+  def get_queryset(self):
+    user = self.request.user
+    if user.role != 'dropshipper' and user.role != 'client':
+        return Response({"error": "Accès non autorisé"}, status=403)
+    
+    queryset = FashionModel.objects.filter(type='homme', state='accepted')
+    
+    
+    print(f"User: {user}, Authenticated: {user.is_authenticated}, Role: {getattr(user, 'role', 'None')}")
+    
+    if user.is_authenticated and user.role == 'dropshipper':
+        print("Applying dropshipper filter: price > 0")
+        queryset = queryset.filter(price_per_piece_for_dropshipper__gt=0)
+        print(f"Filtered queryset count after price filter: {queryset.count()}")
+        
+        # Filtrer les modèles où min_pieces_for_dropshipper <= quantité totale des variantes
+        filtered_models = []
+        for model in queryset:
+            total_quantity = model.total_pieces()  # Utilise la méthode existante du modèle
+            if model.min_pieces_for_dropshipper <= total_quantity:
+                filtered_models.append(model.id)
+        
+        # Refiltrer le queryset avec les IDs valides
+        queryset = queryset.filter(id__in=filtered_models)
+        print(f"Filtered queryset count after quantity check: {queryset.count()}")
+    
+    return queryset
     
 
 #get all enfant models accepted from the store 
 class FashionModelEnfantListView(generics.ListAPIView):
-    serializer_class = FashionModelSerializer2
+  serializer_class = FashionModelSerializer2
+  permission_classes = [IsAuthenticated]
     
-    def get_queryset(self):
-        # Filtrer seulement les modèles de type "enfant" avec état "accepted"
-        return FashionModel.objects.filter(type='enfant', state='accepted')
+    
+  def get_queryset(self):
+    user = self.request.user
+    if user.role != 'dropshipper' and user.role != 'client':
+        return Response({"error": "Accès non autorisé"}, status=403)
+    
+    queryset = FashionModel.objects.filter(type='enfant', state='accepted')
+    
+    
+    print(f"User: {user}, Authenticated: {user.is_authenticated}, Role: {getattr(user, 'role', 'None')}")
+    
+    if user.is_authenticated and user.role == 'dropshipper':
+        print("Applying dropshipper filter: price > 0")
+        queryset = queryset.filter(price_per_piece_for_dropshipper__gt=0)
+        print(f"Filtered queryset count after price filter: {queryset.count()}")
+        
+        # Filtrer les modèles où min_pieces_for_dropshipper <= quantité totale des variantes
+        filtered_models = []
+        for model in queryset:
+            total_quantity = model.total_pieces()  # Utilise la méthode existante du modèle
+            if model.min_pieces_for_dropshipper <= total_quantity:
+                filtered_models.append(model.id)
+        
+        # Refiltrer le queryset avec les IDs valides
+        queryset = queryset.filter(id__in=filtered_models)
+        print(f"Filtered queryset count after quantity check: {queryset.count()}")
+    
+    return queryset
     
     
 
@@ -176,7 +285,7 @@ def get_client_orders(request):
     client = request.user
     
     # Vérifier que l'utilisateur est bien un client
-    if client.role != 'client':
+    if client.role != 'client' and client.role != 'dropshipper':
         return Response(
             {'error': 'Accès non autorisé. Seuls les clients peuvent accéder à leurs commandes.'},
             status=status.HTTP_403_FORBIDDEN
@@ -315,6 +424,23 @@ def create_order(request):
                 {"error": "Seuls les clients et dropshippers peuvent acheter un modèle"},
                 status=status.HTTP_403_FORBIDDEN
             )
+            
+            
+        if request.user.role == 'dropshipper':
+            if not request.user.is_active:
+                return Response(
+                    {"error": "Ce dropshipper n'est pas actif"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            # Vérifier la présence du champ name_acheteur pour les dropshippers
+            if 'name_acheteur' not in data:
+                return Response(
+                    {'error': 'Le champ name_acheteur est requis pour les dropshippers.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+                
+            
         
         # Valider les données requises
         required_fields = ['phone_number', 'address', 'model_code', 'wilaya_name', 'variants']
@@ -359,6 +485,22 @@ def create_order(request):
                     status=status.HTTP_404_NOT_FOUND
                 )
         
+        
+        
+        dropshipper_client_obj = None
+        if request.user.role == 'dropshipper' and request.user.is_active:
+            try:
+                dropshipper_profile = Dropshipper.objects.get(user=request.user)
+                # Créer ou récupérer le client dropshipper
+                dropshipper_client_obj, created = DropshipperClients.objects.get_or_create(
+                    dropshipper=dropshipper_profile,
+                    nom_client=data['name_acheteur']
+                )
+            except Dropshipper.DoesNotExist:
+                return Response(
+                    {'error': 'Profil dropshipper non trouvé.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
         # Créer la commande
         order = Order.objects.create(
             user=request.user,
@@ -367,8 +509,12 @@ def create_order(request):
             fashion_model=fashion_model,
             wilaya=wilaya,
             promo_code=promo_code_obj,
-            state='pending'
+            state='pending',
+            dropshipper_client=dropshipper_client_obj if request.user.role == 'dropshipper' else None
+
         )
+        
+        
         
        
         variants_data = data['variants']

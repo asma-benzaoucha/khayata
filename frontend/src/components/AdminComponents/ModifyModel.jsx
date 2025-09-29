@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Toast from "../../components/generalComponents/Toast";
 import "../../style/AdminStyle/addNewAffiliate.css";
 import InputField from '../../components/generalComponents/Inputfield';
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 
 export default function ModifyModelPopup({ isOpen, onClose, onSuccess, currentModel }) {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -11,7 +12,8 @@ export default function ModifyModelPopup({ isOpen, onClose, onSuccess, currentMo
   const [loading, setLoading] = useState(false);
   const [earthquake, setEarthquake] = useState(false);
   const [originalModelCode, setOriginalModelCode] = useState("");
-  
+  const { handle401Error } = useErreur401Handler();
+
   const typeChoices = [
     { value: 'femme', label: 'نساء' },
     { value: 'homme', label: 'رجال' },
@@ -290,9 +292,7 @@ export default function ModifyModelPopup({ isOpen, onClose, onSuccess, currentMo
       }
 
       const token = localStorage.getItem('accessToken');
-      if (!token) {
-        throw new Error("يجب تسجيل الدخول أولاً");
-      }
+      
 
       const response = await fetch(`http://127.0.0.1:8000/adminapi/${originalModelCode}/delete/`, {
         method: 'DELETE',
@@ -301,6 +301,14 @@ export default function ModifyModelPopup({ isOpen, onClose, onSuccess, currentMo
           'Content-Type': 'application/json'
         }
       });
+       if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return deleteModel();
+        }
+      }
+      else
 
       if (response.ok) {
         return true;
@@ -365,9 +373,7 @@ export default function ModifyModelPopup({ isOpen, onClose, onSuccess, currentMo
   const addNewModel = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      if (!token) {
-        throw new Error("يجب تسجيل الدخول أولاً");
-      }
+      
 
       const formData = new FormData();
       
@@ -432,11 +438,17 @@ export default function ModifyModelPopup({ isOpen, onClose, onSuccess, currentMo
 
       const result = await response.json();
 
+if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return addNewModel();
+        }
+      }
+      else 
       if (response.ok) {
         return result;
-      } else if (response.status === 401) {
-        throw new Error("انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى");
-      } else if (result.error) {
+      }  else if (result.error) {
         throw new Error(result.error);
       } else {
         throw new Error("حدث خطأ أثناء إضافة النموذج. يرجى المحاولة مرة أخرى.");

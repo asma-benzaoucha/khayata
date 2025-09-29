@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceArea, ResponsiveContainer } from "recharts";
 import { useNavigate } from "react-router-dom";
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 
 const Courbe = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { handle401Error } = useErreur401Handler();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const accessToken = localStorage.getItem("accessToken");
         
-        if (!accessToken) {
-          navigate("/admin/login");
-          return;
-        }
+       
 
         const response = await fetch(
           "http://127.0.0.1:8000/adminapi/gettotalbenificefromsalingproductspersonlaised&standardinmonth",
@@ -27,10 +26,14 @@ const Courbe = () => {
           }
         );
 
-        if (response.status === 401) {
-          navigate("/admin/login");
-          return;
+         if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchData();
         }
+      }
+      else 
 
         if (!response.ok) {
           throw new Error("Erreur lors de la récupération des données");

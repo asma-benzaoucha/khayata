@@ -7,6 +7,7 @@ import taf3il from "../../assets/taf3il.png";
 import AddAffiliatePopup from '../../components/AdminComponents/AddAffiliatePopup';
 import ReworkWithAffiliate from '../../pages/admin/ReworkWithAffiliate';
 import Vide from "../../components/generalComponents/Vide";
+import useErreur401Handler from '../../components/generalComponents/Erreur401Handle'
 
 function AffiliatePage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,7 +17,7 @@ function AffiliatePage() {
   const [selectedAffiliate, setSelectedAffiliate] = useState(null);
   const [affiliatesData, setAffiliatesData] = useState([]);
   const [loading, setLoading] = useState(true);
-
+ const { handle401Error } = useErreur401Handler();
   // Charger les données des affiliés depuis l'API
   useEffect(() => {
     fetchAffiliatesData();
@@ -26,10 +27,7 @@ function AffiliatePage() {
   const fetchAffiliatesData = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      if (!token) {
-        window.location.href = '/admin/login';
-        return;
-      }
+     
 
       const response = await fetch('http://127.0.0.1:8000/adminapi/getallaffiliateinfos', {
         method: 'GET',
@@ -39,11 +37,18 @@ function AffiliatePage() {
         }
       });
 
+       if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchAffiliatesData ();
+        }
+      }
+      else
+
       if (response.ok) {
         const data = await response.json();
         setAffiliatesData(data);
-      } else if (response.status === 401) {
-        window.location.href = '/admin/login';
       } else {
         console.error('Erreur lors de la récupération des affiliés');
       }

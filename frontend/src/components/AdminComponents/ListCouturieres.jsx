@@ -6,6 +6,8 @@ import areyousure from "../../assets/areyousure.png";
 import youwonnaaccept from "../../assets/icons/youwonnaaccept.png";
 import "../../style/AdminStyle/ListCouturieres.css";
 import Vide from "../../components/generalComponents/Vide";
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
+
 
 export default function ListCouturieres({ filter = "all" }) {
   const [couturieres, setCouturieres] = useState([]);
@@ -16,6 +18,8 @@ export default function ListCouturieres({ filter = "all" }) {
   const [couturiereForAction, setCouturiereForAction] = useState(null);
   const [actionType, setActionType] = useState("");
   const navigate = useNavigate();
+  const { handle401Error } = useErreur401Handler();
+  
 
   useEffect(() => {
     fetchCouturieres();
@@ -26,10 +30,7 @@ export default function ListCouturieres({ filter = "all" }) {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
       
-      if (!token) {
-        navigate('/admin/login');
-        return;
-      }
+     
 
       const response = await fetch('http://127.0.0.1:8000/adminapi/listCouturieres', {
         method: 'GET',
@@ -39,11 +40,14 @@ export default function ListCouturieres({ filter = "all" }) {
         },
       });
 
-      if (response.status === 401) {
-        localStorage.removeItem('accessToken');
-        navigate('/admin/login');
-        return;
+       if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchCouturieres();
+        }
       }
+      else 
 
       if (!response.ok) {
         throw new Error(`Erreur HTTP: ${response.status}`);
@@ -131,10 +135,7 @@ export default function ListCouturieres({ filter = "all" }) {
       const newStatus = actionType === "accept";
       const token = localStorage.getItem('accessToken');
       
-      if (!token) {
-        navigate('/admin/login');
-        return;
-      }
+      
 
       // Mettre à jour l'état local immédiatement
       setAllCouturieres(prev =>
@@ -159,11 +160,14 @@ export default function ListCouturieres({ filter = "all" }) {
         body: JSON.stringify({ isaccepted: newStatus }),
       });
 
-      if (response.status === 401) {
-        localStorage.removeItem('accessToken');
-        navigate('/admin/login');
-        return;
+       if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleStatusChangeConfirmed();
+        }
       }
+      else
 
       if (!response.ok) {
         // Si l'API échoue, annuler la modification locale
@@ -211,10 +215,6 @@ export default function ListCouturieres({ filter = "all" }) {
     try {
       const token = localStorage.getItem('accessToken');
       
-      if (!token) {
-        navigate('/admin/login');
-        return;
-      }
 
       // Mettre à jour l'état local immédiatement
       setAllCouturieres(prev =>
@@ -233,11 +233,14 @@ export default function ListCouturieres({ filter = "all" }) {
         body: JSON.stringify({ isactive: newActiveStatus }),
       });
 
-      if (response.status === 401) {
-        localStorage.removeItem('accessToken');
-        navigate('/admin/login');
-        return;
+       if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleActiveStatusChange();
+        }
       }
+      else 
 
       if (!response.ok) {
         setAllCouturieres(prev =>

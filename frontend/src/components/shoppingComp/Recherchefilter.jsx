@@ -1,9 +1,9 @@
-
 // src/components/Recherchefilter.jsx
 import React, { useState, useEffect } from "react";
 import "../../style/shoppingStyle/Recherchefilter.css";
 import Cards from "./Cards";
 import { FiSearch } from "react-icons/fi";
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 
 const categories = ["الكل", "نساء", "رجال", "أطفال"];
 
@@ -20,25 +20,60 @@ export default function Recherchefilter() {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { handle401Error } = useErreur401Handler();
+
+  // Fonction pour récupérer le token du localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem("accessToken");
+  };
 
   // Fonction pour charger les produits depuis l'API
   const fetchProducts = async (category) => {
     setLoading(true);
+    
+    const token = getAuthToken();
+    
+    // Si pas de token, afficher l'erreur et arrêter
+    
+
     try {
-      const response = await fetch(apiUrls[category]);
+      const response = await fetch(apiUrls[category], {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      // Vérifier si la réponse est OK
+      if (!response.ok) {
+         if (response.status === 401) {
+        const refreshSuccess = await handle401Error();
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchProducts();
+        }
+      }
+      else {
+          console.error(`HTTP error! status: ${response.status}`);
+        }
+        setProducts([]);
+        return;
+      }
+
       const data = await response.json();
 
       // Adapter les données au format attendu par ProductCard
       const formatted = data.map((prod, idx) => ({
-  id: idx,
-  title: prod.name,
-  price: prod.price_per_piece_for_client,
-  images: prod.images.map((img) => img.image),
-  sizes: prod.sizes || [],
-  description: prod.description,
-  code: prod.code, // Assurez-vous que l'API retourne ce champ
-  variants: prod.variants || [] // Assurez-vous que l'API retourne ce champ
-}));
+        id: idx,
+        title: prod.name,
+        price: prod.price_per_piece_for_client,
+        images: prod.images.map((img) => img.image),
+        sizes: prod.sizes || [],
+        description: prod.description,
+        code: prod.code, // Assurez-vous que l'API retourne ce champ
+        variants: prod.variants || [] // Assurez-vous que l'API retourne ce champ
+      }));
 
       setProducts(formatted);
     } catch (error) {
@@ -98,7 +133,6 @@ export default function Recherchefilter() {
           <p className="loading-text">جار التحميل...</p>
         ) : (
           <Cards products={filteredProducts} />
-          //on dois passer les parametres au Cards
         )}
       </div>
     </div>

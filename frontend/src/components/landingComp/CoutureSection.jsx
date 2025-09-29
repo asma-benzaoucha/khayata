@@ -2,7 +2,14 @@ import React from 'react';
 import '../../style/landingStyle/CoutureSection.css';
 import couturelanding from '../../assets/couturelanding.png';
 import etoile from '../../assets/icons/etoile.png'
+import useNavigationDecision from '../generalComponents/DecisionToMakeForPath';
+
 const CoutureSection = () => {
+      const handleNavigation = useNavigationDecision();
+  
+    const handleButtonClick = (buttonName) => {
+    handleNavigation(buttonName);
+  };
   return (
     <section className="couture-section">
       <div className="couture-container">
@@ -16,7 +23,15 @@ const CoutureSection = () => {
             <img src={etoile} alt="etoile" />
             <span className="stat-text"><strong>العديد من الخياطين</strong><br />من مختلف أنحاء الوطن</span>
           </div>
-          <button className="join-button">انضم الآن</button>
+          <button className="join-button" onClick={() => handleButtonClick("انضم الان")}>
+            
+             {
+   JSON.parse(localStorage.getItem('user'))?.role === 'couturiere' 
+   ?  'الدخول للمنصة' 
+   : 'انضم الآن'}
+            
+            
+            </button>
         </div>
         <div className="couture-image">
           <img src={couturelanding} alt="Couture Landing" />

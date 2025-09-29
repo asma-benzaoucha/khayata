@@ -5,6 +5,8 @@ from .modeles import TYPE_CHOICES ,FashionModel
 from .promo import PromoCode  # adapte le chemin si besoin
 from django.core.validators import RegexValidator
 import uuid
+from .modeles import encode_base36
+
 User = get_user_model()
 
 STATE_CHOICES = [
@@ -36,10 +38,22 @@ class CustomOrder(models.Model):
     nameorder=models.CharField(max_length=50, blank=False, null=False)
     codeorder =  models.CharField(
         max_length=50, 
+        blank=True, 
         unique=True, 
-        default=uuid.uuid4,  # Génère un UUID4 unique
         editable=False
     )
+    
+    def save(self, *args, **kwargs):
+        # Sauvegarder une première fois pour générer l'ID
+        if not self.id:
+            super().save(*args, **kwargs)
+        # Si le code n’existe pas encore → générer à partir de l’ID
+        if not self.codeorder:
+            self.codeorder = encode_base36(self.id).zfill(4)  # min 4 caractères
+            return super().save(update_fields=["codeorder"])
+        return super().save(*args, **kwargs)
+    
+    
     completed_at = models.DateTimeField(null=True, blank=True)
     numTelephone = models.CharField(max_length=10,validators=[RegexValidator(r'^\d{10}$', 'Le numéro doit contenir exactement 10 chiffres.')],blank=True, null=True)
     exactaddress=models.CharField(max_length=50,blank=True, null=True)
@@ -69,6 +83,9 @@ class CustomOrderImage(models.Model):
         related_name='custom_images'
     )
     image = models.FileField(upload_to='mycustomorders/')
+    
+    
+    
 
 
 
@@ -83,10 +100,28 @@ class Order(models.Model):
     code_order =  models.CharField(
         max_length=50, 
         unique=True, 
-        default=uuid.uuid4,  # Génère un UUID4 unique
+        blank=True, 
         editable=False
     )
     
+    
+    def save(self, *args, **kwargs):
+        # Sauvegarder une première fois pour générer l'ID
+        if not self.id:
+            super().save(*args, **kwargs)
+        # Si le code n’existe pas encore → générer à partir de l’ID
+        if not self.code_order:
+            self.code_order = encode_base36(self.id).zfill(4)  # min 4 caractères
+            return super().save(update_fields=["code_order"])
+        return super().save(*args, **kwargs)
+    
+    dropshipper_client = models.ForeignKey(
+        'DropshipperClients',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orders'
+    )
 
     user = models.ForeignKey(
         User,

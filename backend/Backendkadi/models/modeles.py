@@ -2,13 +2,24 @@ from django.db import models
 from .promo import PromoCode
 from django.contrib.auth import get_user_model
 import uuid
+import string
+from django.db import models
 User = get_user_model()
 TYPE_CHOICES = [
     ('femme', 'femme'),
     ('homme', 'homme'),
-    ('enfant', 'enfant'),
-    
+    ('enfant', 'enfant'), 
 ] 
+
+def encode_base36(num):
+    chars = string.digits + string.ascii_uppercase  # 0-9 + A-Z
+    base = len(chars)
+    result = ""
+    while num > 0:
+        num, rem = divmod(num, base)
+        result = chars[rem] + result
+    return result or "0"
+
 
 class FashionModel(models.Model):
     STATE_CHOICES = [
@@ -29,7 +40,7 @@ class FashionModel(models.Model):
     code = models.CharField(
         max_length=50, 
         unique=True, 
-        default=uuid.uuid4,  # Génère un UUID4 unique
+        blank=True,
         editable=False
     )
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
@@ -48,7 +59,17 @@ class FashionModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     completed_at = models.DateTimeField(null=True, blank=True)
-
+    
+    
+    def save(self, *args, **kwargs):
+        # Sauvegarder une première fois pour générer l'ID
+        if not self.id:
+            super().save(*args, **kwargs)
+        # Si le code n’existe pas encore → générer à partir de l’ID
+        if not self.code:
+            self.code = encode_base36(self.id).zfill(4)  # min 4 caractères
+            return super().save(update_fields=["code"])
+        return super().save(*args, **kwargs)
 
     def total_pieces(self):
         return sum(variant.quantity for variant in self.variants.all())

@@ -20,7 +20,7 @@ class PromoCode(models.Model):
 
     # Réduction appliquée au client
     discount_percentage = models.DecimalField(
-        max_digits=5, decimal_places=2, help_text="Réduction visible par le client"
+        max_digits=5, decimal_places=2
     )
 
     start_date = models.DateField()

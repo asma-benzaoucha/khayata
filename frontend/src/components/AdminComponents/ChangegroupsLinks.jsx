@@ -4,7 +4,7 @@ import Toast from "../generalComponents/Toast";
 import socialIcon from '../../assets/icons/social.png'; 
 import styloIcon from '../../assets/icons/styloIcon.png';
 import "../../style/AdminStyle/ChangeGroupsLinks.css";
-import api from '../../apimanagement/api';
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 
 export default function 
 
@@ -40,6 +40,7 @@ ChangegroupsLinks({ path = "", align = "center" }) {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [hasExistingData, setHasExistingData] = useState(false);
   const [noChangesError, setNoChangesError] = useState(""); // Nouvel état pour erreur "aucun changement"
+  const { handle401Error } = useErreur401Handler();
 
   // Fonction pour déterminer la classe CSS en fonction de l'alignement
   const getContainerClass = () => {
@@ -54,14 +55,27 @@ ChangegroupsLinks({ path = "", align = "center" }) {
 
   const fetchSocialLinks = async () => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        window.location.href = path;
-        return;
-      }
+      const token = localStorage.getItem('accessToken');
+
+
+      const response = await fetch('http://127.0.0.1:8000/clientapi/sociallinks/', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+       
+      });
+
+      const data = await response.json();
       
-      const response = await api.withAuth(true, true).get('/clientapi/sociallinks/');
-      const data = response.data;
+      if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleSubmit();
+        }
+      }
+      else 
 
       if (response.status === 200 && data.length > 0) {
         const socialData = data[0];
@@ -200,15 +214,27 @@ ChangegroupsLinks({ path = "", align = "center" }) {
   console.log("Form is valid, proceeding with API call");
   setLoading(true);
     try {
-  const refreshToken = localStorage.getItem('refreshToken');
-  if (!refreshToken) {
-    window.location.href = path;
-    setLoading(false);
-    return;
-  }
-  
-  const response = await api.withAuth(true, true).post('/adminapi/updatesociallinks/', form);
-  console.log("API response", response);
+  const token = localStorage.getItem('accessToken');
+ 
+
+
+  const result = await fetch('http://127.0.0.1:8000/adminapi/updatesociallinks/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: form
+      });
+
+      const response = await result.json();
+ if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleSubmit();
+        }
+      }
+      else 
 
   if (response.status === 200) {
     console.log("Update successful");

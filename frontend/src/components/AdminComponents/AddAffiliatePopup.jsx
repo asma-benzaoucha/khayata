@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Toast from "../../components/generalComponents/Toast";
 import "../../style/AdminStyle/addNewAffiliate.css";
 import InputField from '../../components/generalComponents/Inputfield';
-
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 // Fonction pour vérifier si une chaîne contient uniquement des caractères arabes
 const isArabicText = (text) => {
   const arabicRegex = /^[\u0600-\u06FF\s]+$/;
@@ -26,10 +26,12 @@ function AddAffiliatePopup({ isOpen, onClose, onSuccess }) {
   const [availableModels, setAvailableModels] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  
+  const { handle401Error } = useErreur401Handler();
+
   const [form, setForm] = useState({
     fullName: "",
     email: "",
+    phoneNumber: "",
     password: "",
     passwordconfirm: "",
     selectedModels: [],
@@ -69,10 +71,6 @@ function AddAffiliatePopup({ isOpen, onClose, onSuccess }) {
   const fetchAvailableModels = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      if (!token) {
-        navigate('/admin/login');
-        return;
-      }
 
       const response = await fetch('http://127.0.0.1:8000/adminapi/getmodelsnotaffectedtopromocode', {
         method: 'GET',
@@ -81,13 +79,19 @@ function AddAffiliatePopup({ isOpen, onClose, onSuccess }) {
           'Content-Type': 'application/json'
         }
       });
+      if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchAvailableModels ();
+        }
+      }
+      else
 
       if (response.ok) {
         const data = await response.json();
         setAvailableModels(data);
         setFilteredModels(data);
-      } else if (response.status === 401) {
-        navigate('/admin/login');
       } else {
         console.error('Erreur lors de la récupération des modèles');
       }
@@ -95,15 +99,16 @@ function AddAffiliatePopup({ isOpen, onClose, onSuccess }) {
       console.error('Erreur:', error);
     }
   };
+  const validatePhoneNumber = (phone) => {
+  const phoneRegex = /^(05|06|07)[0-9]{8}$/;
+  return phoneRegex.test(phone);
+};
 
   // Fonction pour générer un code promo via l'API
   const generatePromoCode = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      if (!token) {
-        navigate('/admin/login');
-        return;
-      }
+     
 
       const response = await fetch('http://127.0.0.1:8000/adminapi/generate-promo-code', {
         method: 'GET',
@@ -113,12 +118,19 @@ function AddAffiliatePopup({ isOpen, onClose, onSuccess }) {
         }
       });
 
+       if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchAvailableModels ();
+        }
+      }
+
       if (response.ok) {
         const data = await response.json();
         setForm(prev => ({ ...prev, promoCode: data.promo_code }));
-      } else if (response.status === 401) {
-        navigate('/admin/login');
-      } else {
+      } 
+      else {
         console.error('Erreur lors de la génération du code promo');
         // Fallback: générer un code localement en cas d'erreur
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -182,6 +194,13 @@ function AddAffiliatePopup({ isOpen, onClose, onSuccess }) {
     let error = "";
 
     switch (name) {
+      case "phoneNumber":
+  if (!value || value.trim() === "") {
+    error = "الرجاء إدخال رقم الهاتف";
+  } else if (!validatePhoneNumber(value)) {
+    error = "رقم الهاتف يجب أن يبدأ بـ 05 أو 06 أو 07 ويتكون من 10 أرقام";
+  }
+  break;
       case "fullName":
         if (!value || value.trim() === "") {
           error = "الرجاء إدخال الاسم الكامل";
@@ -274,6 +293,11 @@ function AddAffiliatePopup({ isOpen, onClose, onSuccess }) {
 
   const validateForm = () => {
     const newErrors = {};
+    if (!form.phoneNumber || form.phoneNumber.trim() === "") {
+  newErrors.phoneNumber = "الرجاء إدخال رقم الهاتف";
+} else if (!validatePhoneNumber(form.phoneNumber)) {
+  newErrors.phoneNumber = "رقم الهاتف يجب أن يبدأ بـ 05 أو 06 أو 07 ويتكون من 10 أرقام";
+}
     
     // Valider tous les champs obligatoires
     if (!form.fullName || form.fullName.trim() === "") {
@@ -357,15 +381,13 @@ function AddAffiliatePopup({ isOpen, onClose, onSuccess }) {
 
     try {
       const token = localStorage.getItem('accessToken');
-      if (!token) {
-        navigate('/admin/login');
-        return;
-      }
+      
 
       // Préparer les données pour l'API
       const requestData = {
         full_name: form.fullName,
         email: form.email,
+        phoneNumber: form.phoneNumber,
         password: form.password,
         promo_code: form.promoCode,
         profit_percentage: parseFloat(form.profitPercentage),
@@ -383,7 +405,13 @@ console.log("Données à envoyer:", requestData);
         },
         body: JSON.stringify(requestData)
       });
-
+if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return requestData();
+        }
+      }
       if (response.ok) {
         const result = await response.json();
         console.log("Affilié créé avec succès:", result);
@@ -393,8 +421,7 @@ console.log("Données à envoyer:", requestData);
         if (onSuccess) {
           onSuccess(result);
         }
-      } else if (response.status === 401) {
-        navigate('/admin/login');
+    
       } else {
         console.error('Erreur lors de la création de l\'affilié');
         // Gérer les erreurs spécifiques ici
@@ -506,6 +533,21 @@ console.log("Données à envoyer:", requestData);
                 <p className="error">{errors.passwordconfirm}</p>
               )}
             </div>
+
+            <InputField
+  titre="رقم الهاتف:"
+  placeholder="يبدأ بـ 05 أو 06 أو 07 ويتكون من 10 أرقام"
+  type="tel"
+  name="phoneNumber"
+  size="oneline"
+  down={false}
+  value={form.phoneNumber}
+  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+  hasError={isSubmitted && !!errors.phoneNumber}
+/>
+{isSubmitted && errors.phoneNumber && (
+  <p className="error">{errors.phoneNumber}</p>
+)}
             
             <div className="formSection">
               <div className="sectionTitle">النماذج المتاحة</div>

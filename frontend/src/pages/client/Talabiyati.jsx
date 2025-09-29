@@ -8,12 +8,14 @@ import price from '../../assets/icons/price.png';
 import telephone from '../../assets/icons/whatsapp.png';
 import refuse from '../../assets/icons/refuse.png';
 import Navbarshop from "../../components/shoppingComp/Navbarshop";
-import api from "../../apimanagement/api"; // Importez votre instance axios personnalisée
+import useErreur401Handler from '../../components/generalComponents/Erreur401Handle'
 
 function Talabiyati() {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { handle401Error } = useErreur401Handler();
+
 
   useEffect(() => {
     const fetchCommandes = async () => {
@@ -22,25 +24,38 @@ function Talabiyati() {
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) {
           // Redirection immédiate vers le login
-          window.location.href = '/loginClient';
+          window.location.href = '/login';
           return;
         }
         
-        // Utilisation de l'API personnalisée avec authentification
-        const response = await api.withAuth(true, true).get('/clientapi/allorders');
-        
-        const data = response.data;
+
+
+            const token = localStorage.getItem("accessToken");
+  
+  
+    const response = await fetch(`http://127.0.0.1:8000/clientapi/achetermodel/clientapi/allorders`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    
+    const data = await response.json();
+
         const transformedData = transformApiData(data);
         setCommandes(transformedData);
       } catch (err) {
         console.error("Erreur détaillée:", err);
         
-        // Si l'erreur concerne l'authentification, on laisse l'intercepteur gérer
-        if (err.response?.status === 401 || err.message?.includes('Authentication') || err.message?.includes('refresh token')) {
-          // Ces erreurs sont gérées par l'intercepteur, on ne fait rien
-          return;
-        } 
-        
+      
+         if (err.response?.status === 401) {
+        const refreshSuccess = await handle401Error();
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchCommandes ();
+        }
+      }
         // Pour les autres erreurs, on les affiche
         if (err.response?.status === 403) {
           setError('Vous n\'avez pas les permissions nécessaires.');
@@ -182,7 +197,7 @@ function Talabiyati() {
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    window.location.href = '/loginClient';
+    window.location.href = '/login';
   };
 
   // Fonction pour rafraîchir la page

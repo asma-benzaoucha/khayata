@@ -3,133 +3,327 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { InputField } from "@/components/ui/inputField";
 import { PasswordField } from "@/components/ui/passwordfield";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import "../../style/authenticationStyle/LoginClient.css";
+import logo from "../../assets/logobleu.png";
+
+// Dictionnaire des messages d'erreur en arabe
+const ERROR_MESSAGES = {
+  // Erreurs générales
+  "bad_email_or_password": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+  "inactive_account": "يرجى التحقق من بريدك الإلكتروني لتفعيل حسابك.",
+  "account_disabled": "تم تعطيل حسابك من قبل الإدارة.",
+  "couturiere_not_found": "حساب الخياطة غير موجود.",
+  "dropshipper_not_found": "حساب الموزع غير موجود.",
+  
+  // Erreurs spécifiques dropshipper
+  "dropshipper_pending": "حسابك كموزع قيد المراجعة.",
+  "dropshipper_refused": "تم رفض حسابك كموزع من قبل الإدارة.",
+  "dropshipper_désactivé": "تم تعطيل حسابك كموزع من قبل الإدارة.",
+  
+  // Erreurs spécifiques couturiere
+  "couturiere_pending": "حسابك كخياطة قيد المراجعة.",
+  "couturiere_refused": "تم رفض حسابك كخياطة من قبل الإدارة.",
+  "couturiere_désactivé": "تم تعطيل حسابك كخياطة من قبل الإدارة.",
+  
+  // Erreurs de connexion
+  "connection_error": "خطأ في الاتصال بالخادم - تحقق من الاتصال بالإنترنت",
+  "request_error": "خطأ في إعداد الطلب",
+  "unknown_error": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى."
+};
+
+// Clé pour le localStorage
+const REDIRECT_STORAGE_KEY = "login_redirect_path";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({ email: "", password: "", general: "" });
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [isLogging, setIsLogging] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Récupérer le path de redirection depuis l'état de navigation ou du localStorage
+  const [redirectPath, setRedirectPath] = useState("");
+  const [buttonName, setButtonName] = useState("");
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
+    
+    // Récupérer les données de redirection du localStorage au chargement
+    const savedRedirectData = localStorage.getItem(REDIRECT_STORAGE_KEY);
+    if (savedRedirectData) {
+      try {
+        const { path, button } = JSON.parse(savedRedirectData);
+        setRedirectPath(path);
+        setButtonName(button);
+      } catch (error) {
+        console.error("Erreur lors du parsing des données de redirection:", error);
+      }
+    }
+
+    // Si on a de nouvelles données de navigation, les utiliser et les sauvegarder
+    if (location.state?.redirectPath) {
+      const newRedirectPath = location.state.redirectPath;
+      const newButtonName = location.state.buttonName || '';
+      
+      setRedirectPath(newRedirectPath);
+      setButtonName(newButtonName);
+      
+      // Sauvegarder dans le localStorage
+      localStorage.setItem(REDIRECT_STORAGE_KEY, JSON.stringify({
+        path: newRedirectPath,
+        button: newButtonName
+      }));
+    }
+
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [location.state]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear errors when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
+    if (errors[field] || errors.general) {
+      setErrors((prev) => ({ ...prev, [field]: "", general: "" }));
     }
   };
 
   const isFormValid = () => {
     return formData.email.trim() !== "" && formData.password.trim() !== "";
   };
-// ... (imports restent identiques)
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  if (!isFormValid()) {
-    setErrors({ email: "البريد مطلوب", password: "كلمة المرور مطلوبة" });
-    return;
-  }
-
-  setIsLogging(true);
-  setErrors({ email: "", password: "" });
-
-  try {
-    const response = await axios.post("http://127.0.0.1:8000/api/token/", formData, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 10000,
-    });
-
-    localStorage.setItem("accessToken", response.data.access);
-    localStorage.setItem("refreshToken", response.data.refresh);
-    localStorage.setItem("user", JSON.stringify(response.data.user));
-
-    // Redirection selon le rôle
-    const userRole = response.data.user.role;
-    switch (userRole) {
-      case "client": navigate("/client-dashboard"); break;
-      case "couturiere": navigate("/couturiere-dashboard"); break;
-      case "dropshipper": navigate("/dropshipper-dashboard"); break;
-      default: navigate("/");
-    }
-
-  } catch (error) {
-    console.error("Login failed:", error);
-
-    if (error.response) {
-      const data = error.response.data;
-      const errorType = Array.isArray(data.error_type) ? data.error_type[0] : null;
-
-      // Gestion unifiée des comptes en attente
-      if (errorType === "couturiere_pending" || errorType === "dropshipper_pending") {
-        const role = errorType.split('_')[0]; // "couturiere" ou "dropshipper"
-        navigate("/registration-success", {
-          state: {
-            email: formData.email,
-            role: role,
-            message: `حسابك ك${role === "couturiere" ? "خياطة" : "موزع"} قيد المراجعة`
-          }
+  // Fonction pour gérer les redirections spéciales selon le type d'erreur
+  const handleSpecialRedirects = (errorType, email, role) => {
+    switch (errorType) {
+      case "couturiere_pending":
+        navigate("/RegistrationSucess", {
+          state: { email, role, message: ERROR_MESSAGES[errorType] }
         });
-        return;
-      }
+        return true;
+        
+      case "couturiere_refused":
+        navigate("/registration-couturiere-refused", {
+          state: { email, role, message: ERROR_MESSAGES[errorType] }
+        });
+        return true;
 
-      // Gestion des autres erreurs
-      const errorDetail = Array.isArray(data.detail) ? data.detail[0] : "حدث خطأ غير متوقع.";
-      switch (errorType) {
-        case "inactive_account":
-          setErrors({ email: "", password: "يرجى التحقق من بريدك الإلكتروني." });
-          break;
-        case "account_disabled":
-          setErrors({ email: "", password: "تم تعطيل حسابك من قبل الإدارة..." });
-          break;
-        case "bad_email_or_password":
-          setErrors({ email: "", password: "البريد الإلكتروني أو كلمة المرور غير صحيحة." });
-          break;
-        default:
-          setErrors({ email: "", password: errorDetail });
-      }
-    } else {
-      setErrors({ 
-        email: "", 
-        password: error.request 
-          ? "خطأ في الاتصال بالخادم - تحقق من الاتصال" 
-          : "خطأ في إعداد الطلب" 
-      });
+      case "couturiere_désactivé":
+  navigate("/NotActiveCouturiere", {
+    state: { email, role, message: ERROR_MESSAGES[errorType] }
+  });
+  return true;
+        
+      case "dropshipper_pending":
+        navigate("/RegistrationSucess", {
+          state: { email, role, message: ERROR_MESSAGES[errorType] }
+        });
+        return true;
+        
+      case "dropshipper_refused":
+        navigate("/RefuseDropshipperPage", {
+          state: { email, role, message: ERROR_MESSAGES[errorType] }
+        });
+        return true;
+        
+      case "dropshipper_désactivé":
+        navigate("/NotActiveDropshipper", {
+          state: { email, role, message: ERROR_MESSAGES[errorType] }
+        });
+        return true;
+        
+      default:
+        return false;
     }
-  } finally {
-    setIsLogging(false);
+  };
+
+  // Fonction pour gérer la redirection après login réussi
+ // Fonction pour gérer la redirection après login réussi
+const handleSuccessfulLogin = (userRole) => {
+  // Nettoyer le localStorage après un login réussi
+  localStorage.removeItem(REDIRECT_STORAGE_KEY);
+
+  // TOUJOURS utiliser la liste 2 selon le rôle, ignorer le redirectPath
+  switch (userRole) {
+    case "client":
+      navigate("/shopping");
+      break;
+    case "couturiere":
+      navigate("/couturiere/dashboard");
+      break;
+    case "dropshipper":
+      navigate("/shoppingDropshipper");
+      break;
+    case "affiliate":
+      navigate("/AffiliateDashboard");
+      break;
+    default:
+      navigate("/");
+      console.warn(`Rôle non reconnu: ${userRole}`);
   }
 };
 
+  // Fonction pour extraire le message d'erreur approprié
+  const getErrorMessage = (errorType, defaultMessage) => {
+    return ERROR_MESSAGES[errorType] || defaultMessage || ERROR_MESSAGES.unknown_error;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!isFormValid()) {
+      setErrors({ 
+        email: formData.email.trim() === "" ? "البريد مطلوب" : "", 
+        password: formData.password.trim() === "" ? "كلمة المرور مطلوبة" : "",
+        general: "" 
+      });
+      return;
+    }
+
+    setIsLogging(true);
+    setErrors({ email: "", password: "", general: "" });
+
+    try {
+      const response = await axios.post("http://127.0.0.1:8000/api/token/", formData, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000,
+      });
+
+      // Sauvegarder les tokens et les données utilisateur
+      localStorage.setItem("accessToken", response.data.access);
+      localStorage.setItem("refreshToken", response.data.refresh);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+
+      // Redirection après login réussi
+      handleSuccessfulLogin(response.data.user.role, redirectPath);
+
+    } catch (error) {
+      console.error("Login failed:", error);
+
+      if (error.response) {
+        const data = error.response.data;
+        const errorType = Array.isArray(data.error_type) ? data.error_type[0] : data.error_type;
+        const errorDetail = Array.isArray(data.detail) ? data.detail[0] : data.detail;
+
+        // Gérer les redirections spéciales
+        if (handleSpecialRedirects(errorType, formData.email, formData.role)) {
+          return;
+        }
+
+        // Gérer les erreurs spécifiques pour couturiere_désactivé
+        if (errorType === "couturiere_désactivé") {
+          setErrors({ 
+            email: "", 
+            password: "",
+            general: "تم الغاء التفعيل لحسابك من طرف الادارة.يمكنك التواصل "
+          });
+          return;
+        }
+
+        // Gérer les autres erreurs
+        const errorMessage = getErrorMessage(errorType, errorDetail);
+        
+        if (errorType === "bad_email_or_password" || errorType === "inactive_account") {
+          setErrors({ email: "", password: errorMessage, general: "" });
+        } else {
+          setErrors({ email: "", password: "", general: errorMessage });
+        }
+
+      } else if (error.request) {
+        setErrors({ 
+          email: "", 
+          password: "", 
+          general: ERROR_MESSAGES.connection_error 
+        });
+      } else {
+        setErrors({ 
+          email: "", 
+          password: "", 
+          general: ERROR_MESSAGES.request_error 
+        });
+      }
+    } finally {
+      setIsLogging(false);
+    }
+  };
+
+  // Modifier le lien vers signup pour inclure la redirection
+ const getSignupLink = () => {
+  
+ 
+  if (redirectPath) {
+    console.log(redirectPath)
+    return redirectPath;
+  }
+
+  // Vérifier le rôle dans localStorage
+  const userData = localStorage.getItem("user");
+  if (userData) {
+    try {
+      const { role } = JSON.parse(userData);
+      
+      if (role === "dropshipper") {
+        console.log("dropshipper")
+return "/SignupDropshipper";
+      }
+      if (role === "client"){
+ console.log("dropshipper")
+        return "/registerclient";
+      }
+       
+      
+      if (role === "couturiere") {
+console.log("dropshipper")
+        return "/registerclient";
+      }
+        
+      if (role === "affiliate"){
+console.log("dropshipper")
+        return null;
+      }
+
+
+        
+      
+    } catch (error) {
+      console.error("Erreur parsing userData:", error);
+    }
+  }
+
+  return null; // fallback par défaut
+};
+
+  
+
   return (
-    <div className="fixed inset-0 bg-[#F4F3EF] flex flex-col items-center justify-start px-4 pt-8 pb-4">
-      {/* Header */}
-      <div className="relative w-full max-w-md flex justify-center items-center mb-4">
-        <h2 className="text-[#E5B62B] text-2xl text-center amiri-bold">تسجيل الدخول</h2>
-        <ArrowLeft className="absolute left-4 text-[#374151] w-5 h-5 cursor-pointer" />
-        <div className="fixed top-4 right-0 z-50">
-          <img
-            src="/logo.png"
-            alt="Logo"
-            className="w-[8rem] max-w-full h-auto object-contain"
-          />
-        </div>
+    <div className="login-container">
+      {/* Logo centré avec espace en dessous */}
+      <div className="login-logo">
+        <img src={logo} alt="Logo" />
       </div>
-      {/* White Card */}
-      <div className="bg-white rounded-t-3xl rounded-b-2xl shadow-md w-full max-w-xl h-[70vh] flex flex-col overflow-hidden">
-        <div className="overflow-y-auto px-6 py-6 flex-1" dir="rtl">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2 text-right">
+      
+      {/* White Card avec titre et icône à l'intérieur */}
+      <div className="login-card">
+        <div className="login-card-content">
+          {/* Header avec bouton de retour et titre à l'intérieur de la carte */}
+          <div className="login-header">
+            <ArrowLeft 
+              className="login-back-button" 
+              onClick={() => navigate(-1)}
+            />
+            <h2 className="login-title">تسجيل الدخول</h2>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="login-form">
+            {/* Message d'erreur général */}
+            {errors.general && (
+              <div className="login-error-general">
+                <p className="login-error-text">{errors.general}</p>
+              </div>
+            )}
+
+            <div className="login-input-group">
               <InputField
                 label="البريد الإلكتروني:"
                 type="email"
@@ -148,33 +342,47 @@ const handleSubmit = async (e) => {
                 error={errors.password}
               />
             </div>
-            <div className="text-right">
-              <span className="text-[#4A66BD] text-sm underline cursor-pointer">
+ {getSignupLink() !== null && (
+            <div className="login-forgot-password">
+              <span className="login-forgot-link">
                 <Link to="/forgot-password">
-                نسيت كلمة المرور؟ 
+                  نسيت كلمة المرور؟ 
                 </Link>
               </span>
             </div>
-            <Button
+ )}
+            <button
               type="submit"
               disabled={!isFormValid() || isLogging}
-              className="w-full h-12 rounded-full text-white font-medium mt-4 disabled:opacity-50"
-              style={{ backgroundColor: "#E5B62B" }}
+              className="login-submit-button"
             >
               {isLogging ? "جاري الدخول..." : "دخول"}
-            </Button>
-            <p className="text-center text-sm mt-4 text-[#374151]">
-              ليس لديك حساب؟{" "}
-              <span className="text-[#4A66BD] underline cursor-pointer">
-                <Link to="/signup">
-                أنشئ حسابك الآن
-                </Link>
-              </span>
-            </p>
+            </button>
+
+{getSignupLink() !== null && (
+  <p className="login-signup-text">
+    {(() => {
+      const signupLink = getSignupLink();
+      if (signupLink === "/registerclient") {
+        return "ليس لديك حساب زبون؟ ";
+      } else if (signupLink === "/SignupDropshipper") {
+        return "ليس لديك حساب دروبشيبر؟ ";
+      } else if (signupLink === "/signup") {
+        return "ليس لديك حساب خياطة؟ ";
+      } else {
+        return "ليس لديك حساب؟ ";
+      }
+    })()}
+    <span className="login-signup-link">
+      <Link to={getSignupLink()}>
+        أنشئ حسابك الآن
+      </Link>
+    </span>
+  </p>
+)}
           </form>
         </div>
       </div>
     </div>
   );
 }
-

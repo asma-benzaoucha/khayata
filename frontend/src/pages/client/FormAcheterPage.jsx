@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Popup from "../../components/generalComponents/Popup";
 import { useNavigate, useLocation } from 'react-router-dom';
-import api from "../../apimanagement/api";
+
 
 import Navbarshop from '../../components/shoppingComp/Navbarshop';
 import modelImage from '../../assets/products/p1.png';
@@ -59,26 +59,26 @@ function FormAcheterPage() {
   const availableColors = [...new Set(variants.map(v => v.color))];
 
   // Fonction pour obtenir les couleurs disponibles pour une taille donnée
-  const getAvailableColorsForSize = (size) => {
-    if (!size) return availableColors;
-    
-    const colorsForSize = variants
-      .filter(variant => variant.size === size && variant.quantity > 0)
-      .map(variant => variant.color);
-    
-    return [...new Set(colorsForSize)];
-  };
+// Fonction pour obtenir les couleurs disponibles pour une taille donnée, en excluant les combinaisons déjà utilisées
+const getAvailableColorsForSize = (size) => {
+  if (!size) return availableColors;
+  
+  const colorsForSize = variants
+    .filter(variant => variant.size === size && variant.quantity > 0)
+    .map(variant => variant.color);
+  
+  return [...new Set(colorsForSize)];
+};
 
-  // Fonction pour obtenir les tailles disponibles pour une couleur donnée
-  const getAvailableSizesForColor = (color) => {
-    if (!color) return availableSizes;
-    
-    const sizesForColor = variants
-      .filter(variant => variant.color === color && variant.quantity > 0)
-      .map(variant => variant.size);
-    
-    return [...new Set(sizesForColor)];
-  };
+const getAvailableSizesForColor = (color) => {
+  if (!color) return availableSizes;
+  
+  const sizesForColor = variants
+    .filter(variant => variant.color === color && variant.quantity > 0)
+    .map(variant => variant.size);
+  
+  return [...new Set(sizesForColor)];
+};
 
   // Fonction pour obtenir la quantité disponible pour une combinaison taille/couleur
   const getAvailableQuantity = (size, color) => {
@@ -132,12 +132,19 @@ function FormAcheterPage() {
     }
     
     setIsLoadingDelivery(true);
-    try {
-      const response = await api.withAuth(true, true).get(
-        `/clientapi/delivery-price/?wilaya_name=${encodeURIComponent(wilayaName)}`
-      );
-      
-      const data = response.data;
+
+
+  
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/clientapi/delivery-price/?wilaya_name=${encodeURIComponent(wilayaName)}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    
+    const data = await response.json();
+
       setPrixLivraison(parseFloat(data.delivery_price));
     } catch (error) {
       console.error("Erreur lors de la récupération du prix de livraison:", error);
@@ -158,12 +165,21 @@ function FormAcheterPage() {
     setIsValidatingCode(true);
     setDiscountError("");
     
-    try {
-      const response = await api.withAuth(true, true).get(
-        `/clientapi/validatecodepromo/${code.trim()}/${modelCode}`
-      );
-      
-      const data = response.data;
+
+
+ try {
+    const response = await fetch(`http://127.0.0.1:8000/clientapi/validatecodepromo/${code.trim()}/${modelCode}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    
+    const data = await response.json();
+
+
+
+
       
       if (data.valid) {
         setDiscountData(data);
@@ -228,19 +244,25 @@ function FormAcheterPage() {
     };
     
     console.log("Données envoyées:", orderData);
+    const token = localStorage.getItem("accessToken");
+  
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/clientapi/achetermodel/`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(orderData)
+    });
     
-    try {
-      const response = await api.withAuth(true, true).post(
-        '/clientapi/achetermodel/',
-        orderData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
-      
-      const data = response.data;
+    const data = await response.json();
+
+
+
+
+
+   
       
       if (response.status === 201) {
         setShowPopup(true);
@@ -439,10 +461,23 @@ function FormAcheterPage() {
         }
       }
     });
+const combinations = [];
+products.forEach((product) => {
+  if (product.size && product.color) {
+    const combination = `${product.size}-${product.color}`;
+    if (combinations.includes(combination)) {
+      newErrors[`combination-${product.id}`] = "هذا اللون و المقاس مضاف من قبل";
+    } else {
+      combinations.push(combination);
+    }
+  }
+});
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
+   
 
   useEffect(() => {
     return () => {
@@ -491,8 +526,8 @@ function FormAcheterPage() {
 
             <form className="purchase-form" onSubmit={(e) => e.preventDefault()}>
               {products.map((product, index) => {
-                const availableColorsForSelectedSize = getAvailableColorsForSize(product.size);
-                const availableSizesForSelectedColor = getAvailableSizesForColor(product.color);
+                 const availableColorsForSelectedSize = getAvailableColorsForSize(product.size, product.id);
+  const availableSizesForSelectedColor = getAvailableSizesForColor(product.color, product.id);
                 
                 return (
                   <div className="flex-row" key={product.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
@@ -709,7 +744,7 @@ function FormAcheterPage() {
                     buttons={[
       {
         text: "حسنا",
-        navigateTo: "/mycommands", // ← Utilise navigateTo au lieu de onConfirm
+    navigateTo: "/mycommands#orders", // ← Ajouter le hash
         backgroundColor: "#22C55E",
         textColor: "#FFFFFF"
       }

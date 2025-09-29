@@ -6,10 +6,18 @@ import time from "../../assets/icons/time.png";
 import money from "../../assets/icons/money.png";
 import whatsapp from "../../assets/icons/whatsapp.png";
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import useNavigationDecision from '../generalComponents/DecisionToMakeForPath';
 
 export default function DropshippingSection() {
-  const [whatsappLink, setWhatsappLink] = useState("https://chat.whatsapp.com/GHvAxP5Jb5sFNQHqaoRgsw?mode=ac_t");
 
+     const handleNavigation = useNavigationDecision();
+    
+      const handleButtonClick = (buttonName) => {
+      handleNavigation(buttonName);
+    };
+  const [whatsappLink, setWhatsappLink] = useState("https://chat.whatsapp.com/GHvAxP5Jb5sFNQHqaoRgsw?mode=ac_t");
+const navigate =useNavigate()
   useEffect(() => {
     axios.get("http://127.0.0.1:8000/clientapi/sociallinks/")
       .then((res) => {
@@ -26,6 +34,8 @@ export default function DropshippingSection() {
         // Garde le lien par défaut en cas d'erreur
       });
   }, []);
+
+
 
   const features = [
     {
@@ -126,9 +136,13 @@ export default function DropshippingSection() {
 
               {/* Action Buttons */}
               <div className="action-buttons">
-                <button className="register-btn">
-                  التسجيل في الدروبشيبينغ
-                </button>
+                <button className="register-btn" onClick={() => handleButtonClick("التسجيل في الدروبشيبينغ")}>
+  {
+   JSON.parse(localStorage.getItem('user'))?.role === 'dropshipper' 
+   ?  'تصفح المتجر' 
+   : 'التسجيل في الدروبشيبينغ'}
+</button>
+
                
                    <a
                      href={whatsappLink}

@@ -8,6 +8,7 @@ import hideicon from "../../assets/hide.png";
 import Popup from "../../components/generalComponents/Popup";
 import areyousure from "../../assets/areyousure.png";
 import "../../style/AdminStyle/ModelComp.css";
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 
 export default function Namadij({
   codemodel = "",
@@ -27,7 +28,8 @@ export default function Namadij({
   const [isImagePopupOpen, setIsImagePopupOpen] = useState(false);
   const [isHiding, setIsHiding] = useState(false);
   const [showHidePopup, setShowHidePopup] = useState(false);
-
+  const { handle401Error } = useErreur401Handler();
+   
   const handleImageNext = () => {
     if (images.length > 1) {
       setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -83,15 +85,20 @@ export default function Namadij({
           'Content-Type': 'application/json'
         }
       });
+      if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleConfirmHide();
+        }
+      }
+      else 
 
       if (response.ok) {
         console.log("Modèle masqué avec succès");
         if (onHide) {
           onHide(modelId);
         }
-      } else if (response.status === 401) {
-        console.error("Non autorisé - token peut-être expiré");
-        alert("Erreur d'authentification. Veuillez vous reconnecter.");
       } else {
         console.error("Échec du masquage du modèle");
         alert("Erreur lors du masquage du modèle.");

@@ -473,14 +473,24 @@ class OrderSerializer(serializers.ModelSerializer):
     total_quantity = serializers.SerializerMethodField()
     final_price = serializers.SerializerMethodField()
     pricewilaya=serializers.SerializerMethodField()
+    dropshipper_client_name = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Order
         fields = [
             'id', 'model_name', 'final_price', 'phone_number', 
-            'variants', 'total_quantity', 'state', 'created_at', 'images','pricewilaya'
+            'variants', 'total_quantity', 'state', 'created_at', 'images','pricewilaya','dropshipper_client_name'
         ]
-
+        
+        
+    def get_dropshipper_client_name(self, obj):
+        # Retourne le nom du client dropshipper si la commande en a un
+        if obj.dropshipper_client:
+            return obj.dropshipper_client.nom_client
+        return None
+    
+    
     def get_images(self, obj):
         images = ModelImage.objects.filter(fashion_model=obj.fashion_model)
         return ModelImageSerializer(images, many=True).data
@@ -492,12 +502,19 @@ class OrderSerializer(serializers.ModelSerializer):
         return(obj.wilaya.delivery_price if obj.wilaya else 0) 
 
     def get_final_price(self, obj):
-        base_price = obj.fashion_model.price_per_piece_for_client
-        discount = (obj.promo_code.discount_percentage / 100) if obj.promo_code else 0
+       # Vérifier si la commande a un dropshipper
+       if obj.dropshipper_client:
+          base_price = obj.fashion_model.price_per_piece_for_dropshipper
+       else:
+          base_price = obj.fashion_model.price_per_piece_for_client
+    
+       discount = (obj.promo_code.discount_percentage / 100) if obj.promo_code else 0
+    
+       total_price = (base_price * (1 - discount)) 
+       return round(total_price, 2)
         
         
-        total_price = (base_price * (1 - discount)) 
-        return round(total_price, 2)
+       
 
 class CustomOrderSerializer(serializers.ModelSerializer):
     pricewilaya=serializers.SerializerMethodField()

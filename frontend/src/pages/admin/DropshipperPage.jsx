@@ -5,6 +5,7 @@ import Popup from "../../components/generalComponents/Popup";
 import donepopup from "../../assets/areyousure.png";
 import "../../style/AdminStyle/Dashboard.css";
 import Vide from "../../components/generalComponents/Vide"
+import useErreur401Handler from '../../components/generalComponents/Erreur401Handle'
 
 function DropshipperPage() {
   const [dropshippers, setDropshippers] = useState([]);
@@ -14,6 +15,7 @@ function DropshipperPage() {
   const [dropshipperToRemove, setDropshipperToRemove] = useState(null);
   const [actionType, setActionType] = useState(""); // "delete", "activate", "deactivate"
   const [dropshipperForAction, setDropshipperForAction] = useState(null);
+  const { handle401Error } = useErreur401Handler();
 
   // Obtenir le nom du mois actuel en arabe
   const getCurrentMonthInArabic = () => {
@@ -31,10 +33,7 @@ function DropshipperPage() {
       setLoading(true);
       const token = localStorage.getItem("accessToken"); // Changé de adminToken à accessToken
       
-      if (!token) {
-        window.location.href = "/admin/login";
-        return;
-      }
+     
       
       const response = await fetch("http://127.0.0.1:8000/adminapi/getAllDropshippers", {
         headers: {
@@ -44,10 +43,13 @@ function DropshipperPage() {
       });
       
       if (response.status === 401) {
-        localStorage.removeItem("accessToken"); // Changé de adminToken à accessToken
-        window.location.href = "/admin/login";
-        return;
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchDropshippers ();
+        }
       }
+      else
       
       if (!response.ok) {
         throw new Error("Erreur lors de la récupération des dropshippers");
@@ -180,10 +182,13 @@ const handleRefuseDropshipper = async (email) => {
       });
       
       if (response.status === 401) {
-        localStorage.removeItem("accessToken"); // Changé de adminToken à accessToken
-        window.location.href = "/admin/login";
-        return;
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleActivateDropshipper ();
+        }
       }
+      else
       
       if (!response.ok) {
         throw new Error("Erreur lors de l'activation du compte");
@@ -200,10 +205,6 @@ const handleRefuseDropshipper = async (email) => {
     try {
       const token = localStorage.getItem("accessToken"); // Changé de adminToken à accessToken
       
-      if (!token) {
-        window.location.href = "/admin/login";
-        return;
-      }
       
       const response = await fetch(`http://127.0.0.1:8000/adminapi/desactivatecomptedropshipper/${email}`, {
         method: "PATCH",
@@ -214,9 +215,11 @@ const handleRefuseDropshipper = async (email) => {
       });
       
       if (response.status === 401) {
-        localStorage.removeItem("accessToken"); // Changé de adminToken à accessToken
-        window.location.href = "/admin/login";
-        return;
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleDeactivateDropshipper ();
+        }
       }
       
       if (!response.ok) {

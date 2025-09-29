@@ -8,18 +8,20 @@ import LoginPage from "./pages/user/LoginPage";
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Landingpage from './pages/client/Landingpage';
 import ShoppingPage from './pages/client/ShoppingPage'
+import ShoppingDropshipper from './pages/dropshipper/ShoppingDropshipper'
 import FormAcheter from './pages/client/FormAcheterPage'
 import ModelSpecialPage from "./pages/client/ModelSpecialPage";
 import CompteclientPage from "./pages/client/CompteclientPage";
 import Talabiyati from "./pages/client/Talabiyati";
 import Popupimages from "./components/generalComponents/Popupimages";
-import Test from "./components/generalComponents/test";
-import LoginClient from "./pages/client/LoginClient";
 import RegistrationClient from "./pages/client/RegistrationClient";
 import LoginAdmin from "./pages/admin/LoginAdmin";
 import Dashboard from "./pages/admin/Dashboard";
 import ProtectedRoute from "./apimanagement/ProtectedRoute.jsx";
 import TermsAndPolicy from "./pages/client/TermsAndPolicy";
+import TermsAndPolicyDropshipper from "./pages/dropshipper/TermsAndPolicyDropshipper";
+
+
 import Sidebaradmin from "./components/AdminComponents/Sidebaradmin.jsx";
 import ParametreSite from "./pages/admin/ParametreSite";
 import DropshipperCard from "./components/AdminComponents/DropshipperCard"
@@ -33,6 +35,15 @@ import AddNewAffilier from "./components/AdminComponents/AddAffiliatePopup";
 import CouturierePage from "./pages/admin/CouturierePage";
 import AddAffiliatePopup from "./components/AdminComponents/AddAffiliatePopup";
 import Reworkwithaffiliate from "./pages/admin/Reworkwithaffiliate"
+import SignupDropshipper from "./pages/dropshipper/SignupDropshipper";
+import FormAcheterPageDropshipper from "./pages/dropshipper/FormAcheterPageDropshipper";
+import TalabiyatiDropshipper from "./pages/dropshipper/TalabiyatiDropshipper"
+import RegistrationSuccessDropshipper from "./pages/dropshipper/RegistrationSuccessDropshipper";
+import RefuseDropshipperPage from "./pages/dropshipper/RefuseDropshipperPage";
+import NotActiveDropshipper from "./pages/dropshipper/NotActiveDropshipper";
+import RefuseCouturierePage from "./pages/user/RefuseCouturierePage";
+import NotActiveCouturiere from "./pages/user/NotActiveCouturiere";
+
 
 
 
@@ -44,11 +55,11 @@ export default function App() {
         {/* Routes publiques - accessibles sans authentification */}
         <Route path="/" element={<Landingpage />} />
         <Route path="/rules" element={<TermsAndPolicy/>} />
-        
-        
+        <Route path="/rulesdropshipper" element={<TermsAndPolicyDropshipper/>} />
+
+
         {/* Routes d'authentification */}
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/loginClient" element={<LoginClient />} />
         <Route path="/registerclient" element={<RegistrationClient />} />
         <Route path="/signup" element={<RegistrationCouturiere />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -56,8 +67,18 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/password-success" element={<PasswordSuccess />} />
         <Route path="/registration-success" element={<RegistrationSuccess />} />
+        <Route path="/NotActiveDropshipper" element={<NotActiveDropshipper />} />
+        <Route path="/NotActiveCouturiere" element={<NotActiveCouturiere />} />
+
+        
+       
         <Route path="/admin/login" element={<LoginAdmin />} />
-        <Route path="/testing" element={<DropshipperCard/>} />
+        <Route path="/SignupDropshipper" element={<SignupDropshipper/>} />
+        <Route path="/RegistrationSucess" element={<RegistrationSuccessDropshipper/>} />
+        <Route path="/RefuseDropshipperPage" element={<RefuseDropshipperPage/>} />
+        <Route path="/registration-couturiere-refused" element={<RefuseCouturierePage/>} />
+
+  
         
         
         {/* Routes protégées pour clients */}
@@ -89,7 +110,12 @@ export default function App() {
             <Talabiyati />
           </ProtectedRoute>
         } />
-        
+        <Route path="/mycommandsdropshipper" element={
+          <ProtectedRoute requiredUserType="dropshipper">
+            <TalabiyatiDropshipper />
+          </ProtectedRoute>
+        } />
+         
 
          <Route path="/admin/parametres" element={
           <ProtectedRoute requiredUserType="admin">
@@ -160,7 +186,31 @@ export default function App() {
           </ProtectedRoute>
           
         } />
+
+        <Route path="/shoppingDropshipper" element={
+          <ProtectedRoute requiredUserType="dropshipper">
+            <ShoppingDropshipper/>
+          </ProtectedRoute>
+          
+        } />
+     
+     
+
+        <Route path="/FormAcheterPageDropshipper" element={
+          <ProtectedRoute requiredUserType="dropshipper">
+            <FormAcheterPageDropshipper/>
+          </ProtectedRoute>
+          
+        } />
+
+ 
         
+      
+
+        
+
+        
+    
 
 
 
@@ -181,11 +231,7 @@ export default function App() {
         } />
         
         {/* Routes protégées sans type spécifique (accessibles à tous les utilisateurs authentifiés) */}
-        <Route path="/test" element={
-          <ProtectedRoute>
-            <Test />
-          </ProtectedRoute>
-        } />
+       
         <Route path="/popup" element={
           <ProtectedRoute>
             <Popupimages />
@@ -200,3 +246,10 @@ export default function App() {
     </Router>
   );
 }
+
+
+
+
+
+
+

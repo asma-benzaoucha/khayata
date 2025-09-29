@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import ModelComp from "./ModelComp";
 import PostModelCouturiere from "./PostModelCouturiere";
 import "../../style/AdminStyle/DemandePublicationModel.css"
 import Vide from "../../components/generalComponents/Vide"
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 
 export default function DemandePublicationModel() {
   const [models, setModels] = useState([]);
@@ -12,7 +12,8 @@ export default function DemandePublicationModel() {
   const [error, setError] = useState(null);
   const [selectedModel, setSelectedModel] = useState(null);
   const [isAcceptPopupOpen, setIsAcceptPopupOpen] = useState(false);
-  const navigate = useNavigate();
+  const { handle401Error } = useErreur401Handler();
+
 
   const fetchModels = async () => {
     try {
@@ -30,11 +31,14 @@ export default function DemandePublicationModel() {
         }
       );
 
-      if (response.status === 401) {
-        localStorage.removeItem('accessToken');
-        navigate('/admin/login');
-        return;
+       if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchModels();
+        }
       }
+      else 
 
       if (response.data.success) {
         const transformedModels = response.data.models.map(model => ({

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Toast from "../../components/generalComponents/Toast";
 import "../../style/AdminStyle/addNewAffiliate.css";
 import InputField from '../../components/generalComponents/Inputfield';
+import useErreur401Handler from '../generalComponents/Erreur401Handle';
 
 export default function Addfassou({ isOpen, onClose, onSuccess }) {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -10,7 +11,8 @@ export default function Addfassou({ isOpen, onClose, onSuccess }) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [earthquake, setEarthquake] = useState(false);
-  
+    const { handle401Error } = useErreur401Handler();
+
   const typeChoices = [
     { value: 'femme', label: 'نساء' },
     { value: 'homme', label: 'رجال' },
@@ -241,12 +243,7 @@ export default function Addfassou({ isOpen, onClose, onSuccess }) {
     
     try {
       const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setErrorMessage("يجب تسجيل الدخول أولاً");
-        setShowErrorToast(true);
-        setLoading(false);
-        return;
-      }
+      
 
       const formData = new FormData();
       
@@ -276,10 +273,18 @@ export default function Addfassou({ isOpen, onClose, onSuccess }) {
         body: formData
       });
 
+
       const result = await response.json();
 
       // Dans la fonction handleSubmit du composant Addfassou
-if (response.ok) {
+  if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return handleSubmit();
+        }
+      }
+else if (response.ok) {
   console.log("Commande Fassou créée avec succès:", result);
   
   setShowSuccessToast(true);
@@ -310,9 +315,6 @@ if (response.ok) {
     onClose();
   }, 2000);
         
-      } else if (response.status === 401) {
-        setErrorMessage("انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى");
-        setShowErrorToast(true);
       } else if (result.error) {
         setErrorMessage(result.error);
         setShowErrorToast(true);
@@ -407,10 +409,10 @@ if (response.ok) {
               </div>
               
               <div className="inputField">
-                <label>السعر الابتدائي (مطلوب):</label>
+                <label>السعرالاجمالي (مطلوب):</label>
                 <input
                   type="number"
-                  placeholder="أدخل السعر الابتدائي بالدينار الجزائري"
+                  placeholder="أدخل السعر الاجمالي بالدينار الجزائري"
                   name="initialprice"
                   value={form.initialprice}
                   onChange={(e) => handleInputChange('initialprice', e.target.value)}
@@ -434,7 +436,7 @@ if (response.ok) {
               </div>
 
               <div className="inputField">
-                <label>تاريخ الاستحقاق (مطلوب):</label>
+                <label>التاريخ الأقصى لاستلام الطلبية(مطلوب):</label>
                 <input
                   type="date"
                   name="deadline"
@@ -539,10 +541,9 @@ if (response.ok) {
             </div>
 
             <div className="formSection">
-              <div className="sectionTitle">صور النموذج (مطلوب)</div>
               
               <InputField
-                titre="إضافة صور للنموذج:"
+                titre="صور النموذج النهائي(مطلوب):"
                 type="file"
                 name="images"
                 size="oneline"

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Toast from "../../components/generalComponents/Toast";
 import "../../style/AdminStyle/addNewAffiliate.css";
 import InputField from '../../components/generalComponents/Inputfield';
+import useErreur401Handler from '../../components/generalComponents/Erreur401Handle'
 
 function ReworkWithAffiliate({ isOpen, onClose, affiliate , onSuccess}) {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -14,7 +15,8 @@ function ReworkWithAffiliate({ isOpen, onClose, affiliate , onSuccess}) {
   const [loading, setLoading] = useState(false);
   const [allModelsAssigned, setAllModelsAssigned] = useState(false);
   const navigate = useNavigate();
-  
+  const { handle401Error } = useErreur401Handler();
+
   const [form, setForm] = useState({
     selectedModels: [],
     promoCode: "",
@@ -59,10 +61,7 @@ function ReworkWithAffiliate({ isOpen, onClose, affiliate , onSuccess}) {
   const fetchAvailableModels = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      if (!token) {
-        navigate('/admin/login');
-        return;
-      }
+      
 
       const response = await fetch('http://127.0.0.1:8000/adminapi/getmodelsnotaffectedtopromocode', {
         method: 'GET',
@@ -84,8 +83,13 @@ function ReworkWithAffiliate({ isOpen, onClose, affiliate , onSuccess}) {
           setAllModelsAssigned(false);
         }
       } else if (response.status === 401) {
-        navigate('/admin/login');
-      } else {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchAvailableModels ();
+        }
+      }
+      else {
         console.error('Erreur lors de la récupération des modèles');
       }
     } catch (error) {
@@ -97,10 +101,7 @@ function ReworkWithAffiliate({ isOpen, onClose, affiliate , onSuccess}) {
   const generatePromoCode = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      if (!token) {
-        navigate('/admin/login');
-        return;
-      }
+      
 
       const response = await fetch('http://127.0.0.1:8000/adminapi/generate-promo-code', {
         method: 'GET',
@@ -113,9 +114,15 @@ function ReworkWithAffiliate({ isOpen, onClose, affiliate , onSuccess}) {
       if (response.ok) {
         const data = await response.json();
         setForm(prev => ({ ...prev, promoCode: data.promo_code }));
-      } else if (response.status === 401) {
-        navigate('/admin/login');
-      } else {
+      } else 
+      if (response.status === 401) {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchAvailableModels ();
+        }
+      }
+      else {
         console.error('Erreur lors de la génération du code promo');
         // Fallback: générer un code localement en cas d'erreur
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -318,8 +325,13 @@ function ReworkWithAffiliate({ isOpen, onClose, affiliate , onSuccess}) {
         }
         
       } else if (response.status === 401) {
-        navigate('/admin/login');
-      } else {
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchAvailableModels ();
+        }
+      }
+      else {
         console.error('Erreur lors de la création du nouveau code promo:', result);
         setErrorMessage(result.error || "حدث خطأ أثناء إنشاء كود الترويج الجديد. يرجى المحاولة مرة أخرى.");
         setShowErrorToast(true);

@@ -6,10 +6,12 @@ import avancer from "../../assets/revenirjaune.png";
 import "../../style/AdminStyle/Dashboard.css";
 import Courbe from "@/components/AdminComponents/Courbe";
 import { useNavigate } from "react-router-dom";
+import useErreur401Handler from '../../components/generalComponents/Erreur401Handle'
 
 function Dashboard() {
   const navigate = useNavigate();
-  
+    const { handle401Error } = useErreur401Handler();
+
   // États pour suivre l'index courant de chaque section
   const [currentCouturiereIndex, setCurrentCouturiereIndex] = useState(0);
   const [currentAffiliateIndex, setCurrentAffiliateIndex] = useState(0);
@@ -54,10 +56,13 @@ function Dashboard() {
       });
       
       if (response.status === 401) {
-        localStorage.removeItem("accessToken");
-        navigate("/admin/login");
-        return;
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchMostSoldModels();
+        }
       }
+      else
       
       if (response.status === 403) {
         setErrorModels("Permission refusée. Seuls les administrateurs peuvent accéder à ces données.");
@@ -91,10 +96,7 @@ function Dashboard() {
       setLoadingCouturieres(true);
       const token = localStorage.getItem("accessToken");
       
-      if (!token) {
-        navigate("/admin/login");
-        return;
-      }
+     
       
       const response = await fetch("http://127.0.0.1:8000/adminapi/GetMostActiveCouturiere", {
         method: "GET",
@@ -105,10 +107,13 @@ function Dashboard() {
       });
       
       if (response.status === 401) {
-        localStorage.removeItem("accessToken");
-        navigate("/admin/login");
-        return;
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchMostActiveCouturieres ();
+        }
       }
+      else
       
       if (response.status === 403) {
         setErrorCouturieres("Permission refusée. Seuls les administrateurs peuvent accéder à ces données.");
@@ -153,10 +158,7 @@ function Dashboard() {
       setLoadingAffiliates(true);
       const token = localStorage.getItem("accessToken");
       
-      if (!token) {
-        navigate("/admin/login");
-        return;
-      }
+     
       
       const response = await fetch("http://127.0.0.1:8000/adminapi/getmostActifAffilier", {
         method: "GET",
@@ -167,10 +169,13 @@ function Dashboard() {
       });
       
       if (response.status === 401) {
-        localStorage.removeItem("accessToken");
-        navigate("/admin/login");
-        return;
+        const refreshSuccess = await handle401Error("/admin/login");
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return fetchMostActiveAffiliates ();
+        }
       }
+      else
       
       if (response.status === 403) {
         setErrorAffiliates("Permission refusée. Seuls les administrateurs peuvent accéder à ces données.");
