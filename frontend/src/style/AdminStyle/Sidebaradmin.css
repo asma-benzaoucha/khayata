@@ -15,7 +15,7 @@
     /* pour que le texte soit aligné à droite */
     font-family: "Cairo", sans-serif;
     margin-left: 40px;
-    overflow: hidden;
+    
    
 }
 
@@ -95,7 +95,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     width: 100%;
-    margin-bottom: 10px;
+    margin-bottom: 40px;
 }
 
 
@@ -112,7 +112,7 @@
     }
 
     .sidebar-header {
-     margin-bottom: 40px;
+     margin-bottom: 30px;
     }
 .sidebar-item {
 
@@ -121,12 +121,13 @@
 
 }
 .sidebar-logo {
-    margin-top: 10px;
+    
     width: 90%;
 }
 
 .logout-btn {
     
-    margin-top: 40px;
+    margin-top: 10px;
+    margin-bottom: 50px;
 }
 }

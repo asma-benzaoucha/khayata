@@ -7,12 +7,12 @@ export default function CompteDropshipperPage(){
   const navigate = useNavigate();
   
   const handleLogout = () => {
+     navigate("/login")
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-   
-     
     localStorage.removeItem('user');
-     navigate("/login")
+ 
+         
    
   };
 

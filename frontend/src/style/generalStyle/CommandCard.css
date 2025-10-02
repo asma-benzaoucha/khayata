@@ -361,6 +361,7 @@
 
 /* Très petits écrans */
 @media (max-width: 768px) {
+    
     .CardContainer {
         margin: 3px;
         width: calc(100% - 6px);
@@ -380,7 +381,7 @@
     }
 
     .photocommand img {
-        margin-left: 5px;
+        margin-left: 30px;
     }
 
     .statusCommand button {
@@ -400,6 +401,8 @@
 
 
     }
+
+        
 }
 
 /* Écrans très larges */
@@ -421,6 +424,10 @@
     .photocommand {
         margin-left: 40px;
     }
+
+        .photocommand img {
+            margin-left: 5px;
+        }
 }
 
 /* Styles pour la section des variantes */

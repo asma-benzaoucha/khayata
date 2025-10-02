@@ -605,8 +605,6 @@ class ChangePasswordWithVerificationSerializer(serializers.Serializer):
 
 
 
-
-
 from rest_framework import serializers
 from .models import PromoCode, FashionModel, User
 
@@ -617,10 +615,15 @@ class FashionModelSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "code", "description", "state"]
 
 
-class PromoCodeSerializer(serializers.ModelSerializer):
-    models_CodePromo = FashionModelSerializer(many=True, read_only=True)
-    affiliate_name = serializers.CharField(source="affiliate.full_name", read_only=True)
 
+
+from django.utils import timezone
+
+class PromoCodeSerializer(serializers.ModelSerializer):
+    models_CodePromo = FashionModelSerializer(source="models", many=True, read_only=True)
+    affiliate_name = serializers.CharField(source="affiliate.full_name", read_only=True)
+    usage_count = serializers.SerializerMethodField()  # ✅ calculé dynamiquement
+    state = serializers.SerializerMethodField()  
     class Meta:
         model = PromoCode
         fields = [
@@ -632,29 +635,46 @@ class PromoCodeSerializer(serializers.ModelSerializer):
             "discount_percentage",
             "start_date",
             "expiration_date",
-            "usage_count",
+            "usage_count",        # ✅ calculé, pas stocké
+            "state", 
             "models_CodePromo",   # 🔗 related fashion models
         ]
 
-# serializers.py
+    def get_usage_count(self, obj):
+        """
+        Compte combien de fois un code promo a été utilisé
+        dans les commandes standards (pas custom_orders),
+        uniquement si la commande est complétée (state = done/finish).
+        """
+        return (
+            Order.objects.filter(
+                promo_code=obj,
+                state__in=["done", "finish"]  # ⚡️ adapter selon tes STATE_CHOICES
+            ).count()
+        )
+
+    def get_state(self, obj):
+        """
+        Vérifie si le code promo est encore valide (non expiré).
+        """
+        now = timezone.now().date()
+        if obj.expiration_date and obj.expiration_date < now:
+            return "passive"
+        return "active"
+
+
+
+
 from rest_framework import serializers
-from .models import User
-
+from .models import User, Affiliate
 class AffiliateAccountSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source="user.full_name", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    role = serializers.CharField(source="user.role", read_only=True)
+
     class Meta:
-        model = User
-        fields = ["id", "full_name", "email", "role", "created_at", "updated_at"]
-        read_only_fields = ["id", "email", "role", "created_at", "updated_at"]
-
-
-
-
-
-
-
-
-
-
+        model = Affiliate
+        fields = ["id", "full_name", "email", "role", "phone_number"]
 
 
 

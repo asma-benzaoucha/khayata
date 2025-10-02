@@ -17,6 +17,8 @@ import ShoppingDropshipper from './pages/dropshipper/ShoppingDropshipper'
 import FormAcheter from './pages/client/FormAcheterPage'
 import ModelSpecialPage from "./pages/client/ModelSpecialPage";
 import CompteclientPage from "./pages/client/CompteclientPage";
+import CompteDropshipperPage from "./pages/dropshipper/CompteDropshipperPage";
+
 import Talabiyati from "./pages/client/Talabiyati";
 import Popupimages from "./components/generalComponents/Popupimages";
 import RegistrationClient from "./pages/client/RegistrationClient";
@@ -122,6 +124,14 @@ export default function App() {
               <CompteclientPage />
             </ProtectedRoute>
           } />
+
+          <Route path="/compte" element={
+            <ProtectedRoute requiredUserType="client">
+              <CompteclientPage />
+            </ProtectedRoute>
+          } />
+
+          
           
           <Route path="/mycommands" element={
             <ProtectedRoute requiredUserType="client">

@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Popup from "../../components/generalComponents/Popup";
 import { useNavigate, useLocation } from 'react-router-dom';
-
 
 import Navbarshop from '../../components/shoppingComp/Navbarshop';
 import modelImage from '../../assets/products/p1.png';
@@ -12,6 +10,7 @@ import "../../style/FormAcheterStyle/FormAcheter.css";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import donepopup from "../../assets/icons/donepopup.png";
 import InputField from '../../components/generalComponents/Inputfield';
+import useErreur401Handler from '../../components/generalComponents/Erreur401Handle'
 
 const wilayas = [
   "أدرار", "الشلف", "الأغواط", "أم البواقي", "باتنة", "بجاية", "بسكرة", "بشار",
@@ -25,6 +24,8 @@ const wilayas = [
 ];
 
 function FormAcheterPage() {
+    const { handle401Error } = useErreur401Handler();
+
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -51,6 +52,9 @@ function FormAcheterPage() {
   // Référence pour le délai de validation du code promo
   const discountTimeoutRef = useRef(null);
   
+  // Référence pour le défilement vers les erreurs
+  const errorRef = useRef(null);
+  
   // Extraire les variantes disponibles
   const variants = productData?.variants || [];
   
@@ -58,8 +62,7 @@ function FormAcheterPage() {
   const availableSizes = [...new Set(variants.map(v => v.size))];
   const availableColors = [...new Set(variants.map(v => v.color))];
 
-  // Fonction pour obtenir les couleurs disponibles pour une taille donnée
-// Fonction pour obtenir les couleurs disponibles pour une taille donnée, en excluant les combinaisons déjà utilisées
+  // Fonction pour obtenir les couleurs disponibles pour une taille donnée, en excluant les combinaisons déjà utilisées
 const getAvailableColorsForSize = (size) => {
   if (!size) return availableColors;
   
@@ -123,6 +126,32 @@ const getAvailableSizesForColor = (color) => {
     : prixBaseTotal;
   
   const total = prixApresRemise + (prixLivraison || 0);
+
+  // Fonction pour faire défiler vers la première erreur
+  const scrollToFirstError = () => {
+    // Attendre un peu pour que le DOM se mette à jour avec les erreurs
+    setTimeout(() => {
+      // Trouver le premier élément d'erreur
+      const firstErrorElement = document.querySelector('.error');
+      
+      if (firstErrorElement) {
+        firstErrorElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center'
+        });
+        
+        // Optionnel: Mettre en surbrillance l'élément d'erreur
+        firstErrorElement.style.transition = 'all 0.3s ease';
+        firstErrorElement.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+        
+        setTimeout(() => {
+          if (firstErrorElement) {
+            firstErrorElement.style.backgroundColor = '';
+          }
+        }, 2000);
+      }
+    }, 100);
+  };
 
   // Fonction pour récupérer le prix de livraison
   const fetchDeliveryPrice = async (wilayaName) => {
@@ -258,7 +287,13 @@ const getAvailableSizesForColor = (color) => {
     
     const data = await response.json();
 
-
+   if (response.status === 401) {
+        const refreshSuccess = await handle401Error();
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return submitOrder ();
+        }
+      }
 
 
 
@@ -474,6 +509,12 @@ products.forEach((product) => {
 });
 
   setErrors(newErrors);
+  
+  // Si des erreurs sont détectées, faire défiler vers la première erreur
+  if (Object.keys(newErrors).length > 0) {
+    scrollToFirstError();
+  }
+  
   return Object.keys(newErrors).length === 0;
 };
 

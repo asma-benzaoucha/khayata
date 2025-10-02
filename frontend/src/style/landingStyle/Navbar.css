@@ -50,12 +50,12 @@
     font-family: 'Cairo', sans-serif;
     position: relative;
     z-index: 1000;
-
     /* Centrage et limitation largeur */
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
+    position:fixed;
   }
 
   /* ---- LOGO ---- */

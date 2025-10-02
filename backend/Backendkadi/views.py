@@ -506,13 +506,13 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
-
+from .models import Affiliate
 class AffiliateProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = AffiliateAccountSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        return self.request.user 
+        return Affiliate.objects.get(user=self.request.user)
 
 
 
@@ -573,8 +573,6 @@ class AffiliatePromoCodeListView(generics.ListAPIView):
     def get_queryset(self):
         # Only promo codes for the logged-in affiliate
         return PromoCode.objects.filter(affiliate=self.request.user)
-
-
 
 
 

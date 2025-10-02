@@ -9,7 +9,7 @@
     padding: 30px 0;
     display: flex;
     justify-content: center;
-    min-height: 800px;
+    min-height: 1500px;
 }
 
 .shop-wrapper {
@@ -73,6 +73,7 @@ font-family: 'Cairo';
   }
 .containershop{
   min-height: 800px;
+  
 }
   
   .filter-bar {

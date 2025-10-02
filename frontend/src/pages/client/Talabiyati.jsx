@@ -33,11 +33,10 @@ function Talabiyati() {
             const token = localStorage.getItem("accessToken");
   
   
-    const response = await fetch(`http://127.0.0.1:8000/clientapi/achetermodel/clientapi/allorders`, {
+const response = await fetch(`http://127.0.0.1:8000/clientapi/allorders/`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
       },
     });
     

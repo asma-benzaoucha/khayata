@@ -123,7 +123,7 @@ const ProtectedRoute = ({ children, requiredUserType = null }) => {
             console.error('Impossible de rafraîchir le token:', error);
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
-            localStorage.removeItem('userData'); // Nettoyer aussi les données utilisateur
+            localStorage.removeItem('user'); // Nettoyer aussi les données utilisateur
             setIsValidating(false);
             return;
           }
@@ -195,7 +195,7 @@ const ProtectedRoute = ({ children, requiredUserType = null }) => {
     let loginPath = '/login';
     const userData = localStorage.getItem('user');
     if (userData){
-     localStorage.removeItem('userData')
+     localStorage.removeItem('user')
     }
     
     // Utiliser le userType détecté ou le requiredUserType
@@ -207,7 +207,7 @@ const ProtectedRoute = ({ children, requiredUserType = null }) => {
       
 
     } else if (targetUserType === 'client') {
-      loginPath = '/loginClient';
+      loginPath = '/login';
     } else if (targetUserType === 'couturiere') {
       loginPath = '/login';
     }
@@ -218,7 +218,7 @@ const ProtectedRoute = ({ children, requiredUserType = null }) => {
     if (userType && requiredUserType && userType !== requiredUserType) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-      localStorage.removeItem('userData');
+      localStorage.removeItem('user');
     }
     
     return <Navigate to={loginPath} replace />;

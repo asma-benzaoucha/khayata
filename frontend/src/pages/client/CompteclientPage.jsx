@@ -6,12 +6,39 @@ import { useNavigate } from 'react-router-dom';
 export default function CompteclientPage(){
   const navigate = useNavigate();
   
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    navigate("/login");
-  };
+ const handleLogout = () => {
+  
+  
+  // Récupérer les informations de l'utilisateur depuis le localStorage
+  const userData = localStorage.getItem('user');
+  
+  if (userData) {
+    try {
+      const user = JSON.parse(userData);
+      
+      // Vérifier le rôle de l'utilisateur
+      if (user.role === 'dropshipper') {
+        localStorage.setItem("login_redirect_path", JSON.stringify({
+          "path": "/SignupDropshipper",
+          "button": "التسجيل في الدروبشيبينغ"
+        }));
+      } else if (user.role === 'client') {
+        localStorage.setItem("login_redirect_path", JSON.stringify({
+          "path": "/registerclient",
+          "button": "تسوق الان"
+        }));
+      }
+      // Vous pouvez ajouter d'autres conditions pour d'autres rôles si nécessaire
+    } catch (error) {
+      console.error("Erreur lors de l'analyse des données utilisateur:", error);
+    }
+  }
+  
+  navigate("/login");
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+};
 
   return(
     <>
@@ -38,3 +65,4 @@ export default function CompteclientPage(){
     </>
   );
 }
+

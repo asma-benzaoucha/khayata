@@ -1,7 +1,3 @@
-
-
-
-
 // pages/AffiliateDashboard.jsx
 import React, { useState, useEffect } from "react";
 import axiosInstance from "@/utils/axiosInstance"; // ✅ use our configured axios
@@ -24,6 +20,7 @@ export default function AffiliateDashboard() {
       try {
         const res = await axiosInstance.get("/affiliate/promocodes/");
         setPromoCodes(res.data);
+        console.log(res.data);
       } catch (err) {
         console.error("Error fetching promo codes:", err);
       } finally {
@@ -53,7 +50,7 @@ export default function AffiliateDashboard() {
             <div>كود التخفيض</div>
             <div>النماذج المرتبطة</div>
             <div>نسبة التخفيض للزبون</div>
-            <div>نسبة الربح للأقلية</div>
+            <div>نسبة الربح للأفيلي</div>
             <div>تاريخ التفعيل</div>
             <div>تاريخ الانتهاء</div>
             <div>الحالة</div>
@@ -72,14 +69,23 @@ export default function AffiliateDashboard() {
                 <div className="text-center text-gray-700">{item.start_date}</div>
                 <div className="text-center text-gray-700">{item.expiration_date}</div>
                 <div className="text-center">
-                  <span
-                    className={`font-semibold ${
-                      item.usage_count > 0 ? "text-green-500" : "text-red-500"
-                    }`}
-                  >
-                    {item.usage_count > 0 ? "نشط" : "منتهي"}
-                  </span>
-                </div>
+  <span
+    className={`font-semibold ${
+      item.state === "active"
+        ? "text-green-500"
+        : item.state === "inactive"
+        ? "text-yellow-500"
+        : "text-red-500"
+    }`}
+  >
+    {item.state === "active"
+      ? "نشط"
+      : item.state === "inactive"
+      ? "غير مفعل بعد"
+      : "منتهي"}
+  </span>
+</div>
+
               </div>
             ))}
           </div>
@@ -94,13 +100,24 @@ export default function AffiliateDashboard() {
             >
               <div className="flex justify-between items-center">
                 <h2 className="font-bold text-gray-800">كود التخفيض: {item.code}</h2>
+                <div className="text-center">
                 <span
-                  className={`px-3 py-1 rounded-full text-white text-sm font-semibold ${
-                    item.usage_count > 0 ? "bg-green-500" : "bg-red-500"
+                  className={`font-semibold ${
+                    item.state === "active"
+                      ? "text-green-500"
+                      : item.state === "inactive"
+                      ? "text-yellow-500"
+                      : "text-red-500"
                   }`}
                 >
-                  {item.usage_count > 0 ? "نشط" : "منتهي"}
+                  {item.state === "active"
+                    ? "نشط"
+                    : item.state === "inactive"
+                    ? "غير مفعل بعد"
+                    : "منتهي"}
                 </span>
+              </div>
+
               </div>
 
               <p className="text-sm text-gray-600 mt-2">

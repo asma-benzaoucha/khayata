@@ -1,7 +1,7 @@
 // components/ProtectedWrapper.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { checkInitialAuth } from "../utils/auth"; // Tu devras créer/corriger cette fonction
+import { checkInitialAuth } from "../utils/auth"; 
 
 function ProtectedWrapper({ children }) {
   const [loading, setLoading] = useState(true);

@@ -8,6 +8,7 @@ import remove from '../../assets/icons/remove.png';
 import "../../style/FormAcheterStyle/FormAcheter.css";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import donepopup from "../../assets/icons/donepopup.png";
+import useErreur401Handler from '../../components/generalComponents/Erreur401Handle';
 
 
 const wilayas = [
@@ -30,6 +31,8 @@ function ModelSpecialPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
+  const { handle401Error } = useErreur401Handler();
+
 
   const [products, setProducts] = useState([{ 
     id: Date.now(),
@@ -260,12 +263,29 @@ const token = localStorage.getItem("accessToken");
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
+        
+        
       },
-      body: JSON.stringify(formData)
+      body: formData
     });
+
+
+    
     
     const data = await response.json();
+    
+
+
+ if (!data.ok) {
+         if (response.status === 401) {
+        const refreshSuccess = await handle401Error();
+        if (refreshSuccess) {
+          // Réessayer la requête avec le nouveau token
+          return submitOrder();
+        }
+         }} 
+
+    
     
     console.log('Commande créée avec succès:', data);
     setShowPopup(true);
@@ -284,6 +304,7 @@ const token = localStorage.getItem("accessToken");
   
   alert("Une erreur s'est produite lors de l'envoi de votre commande. Veuillez réessayer.");
 }
+
  
 };
 

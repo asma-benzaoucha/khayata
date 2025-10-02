@@ -1,6 +1,3 @@
-
-
-
 // components/ui/SidePanelAffilie.jsx
 import React, { useState, useEffect } from "react";
 import { LogOut, Menu, X } from "lucide-react";
@@ -101,7 +98,6 @@ export default function SidePanel({ children, menuItems }) {
           </div>
         )}
       </div>
-
       {/* ===== Mobile Drawer ===== */}
       {mobileOpen && (
         <div className="fixed inset-0 z-30 flex">
@@ -155,12 +151,17 @@ export default function SidePanel({ children, menuItems }) {
                   className="mt-6 text-[#F0C84B] underline flex items-center gap-2"
                 >
                 <LogOut size={15} />
-                <span>تسجيل الخروج</span>
+                <span                   className=" text-[#F0C84B] "
+                >تسجيل الخروج</span>
               </button>
+
+
             </div>
           </div>
         </div>
       )}
+
+      
 
       {/* ===== Main Content ===== */}
       <main className="flex-1 rounded-3xl border-[#DDDDC6] border-[5px] shadow-inner bg-white p-6 overflow-auto md:mt-0 mt-24">
@@ -194,5 +195,3 @@ export default function SidePanel({ children, menuItems }) {
     </div>
   );
 }
-
-
