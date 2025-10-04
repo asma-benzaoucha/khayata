@@ -1,8 +1,3 @@
-
-
-
-
-
 import RegistrationSuccess from "./pages/user/registration-success-to-verified";
 import RegistrationCouturiere from "./pages/user/registration-form-couturiere";
 import ForgotPassword from "./pages/user/forgot-password";

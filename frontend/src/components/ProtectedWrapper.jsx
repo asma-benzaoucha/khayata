@@ -8,6 +8,20 @@ function ProtectedWrapper({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Fonction pour obtenir le rôle de l'utilisateur depuis le localStorage
+  const getUserRole = () => {
+    try {
+      const userData = localStorage.getItem('user');
+      if (!userData) return null;
+      
+      const parsedData = JSON.parse(userData);
+      return parsedData.role || parsedData.userType || parsedData.user_type;
+    } catch (error) {
+      console.error('Erreur lors de la lecture du userData:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     (async () => {
       const ok = await checkInitialAuth(location.pathname);
@@ -22,7 +36,12 @@ function ProtectedWrapper({ children }) {
         ];
         
         if (!publicRoutes.includes(location.pathname)) {
-          navigate("/login");
+          // Déterminer la page de login en fonction du rôle
+          const userRole = getUserRole();
+          const loginPath = userRole === 'admin' ? '/admin/login' : '/login';
+          
+          console.log(`Redirection vers: ${loginPath} (rôle détecté: ${userRole})`);
+          navigate(loginPath);
         }
       }
       setLoading(false);

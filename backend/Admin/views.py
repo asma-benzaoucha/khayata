@@ -201,7 +201,7 @@ def get_all_orders(request):
                 'phone_number': order.phone_number,
                 'standard_command_details': ','.join(details_triples),
                 'promocode': {
-                    'profit_percentage': float(order.promo_code.profit_percentage) if order.promo_code else None
+                    'profit_percentage': float(order.promo_code.discount_percentage) if order.promo_code else None
                 } if order.promo_code else None,
                 'fashion_model': {
                     'name': order.fashion_model.name,
@@ -772,17 +772,23 @@ def get_affiliates_info(request):
                     
                     # Calculer le bénéfice pour cette commande
                     if order.fashion_model and quantity > 0:
-                        benefice_commande = (order.fashion_model.price_per_piece_for_client * (promo_code.profit_percentage / 100) * quantity)
+                        original_price = order.fashion_model.price_per_piece_for_client
+                        discount_percentage = promo_code.discount_percentage
+                        price_after_discount = original_price * (1 - discount_percentage / 100)
+                        benefice_commande = (price_after_discount * (promo_code.profit_percentage / 100) * quantity)
                         benefice_promo += benefice_commande
                         
-                        # Ajouter les informations du modèle vendu
+                        
+                        
                         model_info = {
-                            'model_name': order.fashion_model.name,
-                            'model_code': order.fashion_model.code,
-                            'quantity': quantity,
-                            'benefice_par_piece': order.fashion_model.price_per_piece_for_client * (promo_code.profit_percentage / 100)
-                        }
+                        'model_name': order.fashion_model.name,
+                        'model_code': order.fashion_model.code,
+                        'quantity': quantity,
+                        'benefice_par_piece': price_after_discount * (promo_code.profit_percentage / 100)
+                          }
                         models_vendus.append(model_info)
+        
+                        
             
             
             total_benefice += benefice_promo
@@ -3037,38 +3043,45 @@ def get_total_benefit_from_saling_products_personalized_standard_in_month(reques
     
     # PARTIE 2: Commandes standard
     standard_orders = Order.objects.filter(
-        state='done',
-        completed_at__date__gte=start_date.date(),
-        completed_at__date__lte=end_date.date()
-    )
-    
+    state='done',
+    completed_at__date__gte=start_date.date(),
+    completed_at__date__lte=end_date.date()
+)
+
     for order in standard_orders:
-        order_date = order.completed_at.date().isoformat()
+      order_date = order.completed_at.date().isoformat()
+    
+    # Calculer la quantité totale de la commande
+      total_quantity = 0
+      for variant in order.standard_command_details.all():
+        total_quantity += variant.quantity
+    
+    # Calculer le prix unitaire après réduction si promo code existe
+      if order.dropshipper_client:
+        base_price = order.fashion_model.price_per_piece_for_dropshipper
+      else:
+        base_price = order.fashion_model.price_per_piece_for_client
+    
+      if order.promo_code:
+        # MODIFICATION ICI : Calculer le prix après réduction client
+        discount_percentage = order.promo_code.discount_percentage / 100
+        price_after_discount = base_price * (1 - discount_percentage)
         
-        # Calculer la quantité totale de la commande
-        total_quantity = 0
-        for variant in order.standard_command_details.all():
-            total_quantity += variant.quantity
+        # MODIFICATION ICI : Séparer le bénéfice de l'affilié et de l'admin
+        affiliate_profit_percentage = order.promo_code.profit_percentage / 100
+        affiliate_benefit = price_after_discount * affiliate_profit_percentage * total_quantity
+        admin_benefit = price_after_discount * (1 - affiliate_profit_percentage) * total_quantity
         
-        # Calculer le prix unitaire après réduction si promo code existe
-        if order.dropshipper_client:
-          base_price = order.fashion_model.price_per_piece_for_dropshipper
-        else:
-          base_price = order.fashion_model.price_per_piece_for_client
-        
-        if order.promo_code:
-            discount_percentage = (order.promo_code.discount_percentage + order.promo_code.profit_percentage )/ 100
-            unit_price = base_price * (1 - discount_percentage)
-        else:
-            unit_price = base_price
-        
-        # Calculer le bénéfice pour cette commande
-        order_benefit = unit_price * total_quantity
-        
-        # Ajouter au bénéfice quotidien
-        if order_date in daily_benefits:
-            daily_benefits[order_date]['standard_orders_benefit'] += order_benefit
-            daily_benefits[order_date]['total_benefit'] += order_benefit
+        # MODIFICATION ICI : Le bénéfice de l'admin est admin_benefit
+        order_benefit = admin_benefit
+      else:
+        # Pas de promo code = tout le bénéfice va à l'admin
+        order_benefit = base_price * total_quantity
+    
+    # Ajouter au bénéfice quotidien
+      if order_date in daily_benefits:
+        daily_benefits[order_date]['standard_orders_benefit'] += order_benefit
+        daily_benefits[order_date]['total_benefit'] += order_benefit
     
     # Préparer la réponse
     response_data = {

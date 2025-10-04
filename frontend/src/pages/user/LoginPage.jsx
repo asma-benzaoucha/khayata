@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft } from 'lucide-react';
-import { Button } from "@/components/ui/button";
 import { InputField } from "@/components/ui/inputField";
 import { PasswordField } from "@/components/ui/passwordfield";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -158,6 +157,10 @@ const handleSuccessfulLogin = (userRole) => {
     case "affiliate":
       navigate("/affiliateDashboard/codepromo");
       break;
+
+    case "admin":
+      navigate("/admin/dashboard");
+      break;
     default:
       navigate("/");
       console.warn(`Rôle non reconnu: ${userRole}`);
@@ -280,6 +283,11 @@ console.log("dropshipper")
         
       if (role === "affiliate"){
 console.log("dropshipper")
+        return null;
+      }
+
+      if (role === "admin"){
+console.log("admin")
         return null;
       }
 
