@@ -177,7 +177,7 @@ const formatDeadline = (dateString) => {
                         {deadline && (
           <div className="flex items-center gap-2">
             <img src={deadlineIcon} alt="deadline" className="w-5 h-5" />
-            مدة التسليم: {formatDeadline(deadline)}
+            تاريخ التسليم: {formatDeadline(deadline)}
           </div>
           )}
 

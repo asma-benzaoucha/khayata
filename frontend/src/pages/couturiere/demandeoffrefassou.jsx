@@ -101,8 +101,9 @@ export default function DemandesOffresFassou() {
           type={m.model_type}
           description={m.description}
           status={m.state}
+  images={m.custom_images.map(img => `http://127.0.0.1:8000${img.image}`)}
 
-          images={m.custom_images}
+          // images={m.custom_images}
           sizes={m.variants.map((v) => ({
             size: v.size,
             color: getArabicColorLabel(v.color),
@@ -125,7 +126,9 @@ export default function DemandesOffresFassou() {
           type={m.model_type}
           description={m.description}
           status={m.state}
-          images={m.custom_images}
+          // images={m.custom_images}
+            images={m.custom_images.map(img => `http://127.0.0.1:8000${img.image}`)}
+
           sizes={m.variants.map((v) => ({
             size: v.size,
             color: getArabicColorLabel(v.color),

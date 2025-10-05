@@ -30,15 +30,64 @@ const SearchBar = ({ onSearch, placeholder = "ابحث باسم المستخدم
   );
 };
 
-// Composant PricePopup (inchangé)
+// Composant PricePopup (MODIFIÉ)
 const PricePopup = ({ isOpen, onClose, onConfirm, currentPrice }) => {
   const [price, setPrice] = useState(currentPrice || "");
+  const [email, setEmail] = useState("");
+  const [errors, setErrors] = useState({});
+  const [apiErrors, setApiErrors] = useState({}); // NOUVEAU: état pour les erreurs API
 
-  const handleConfirm = () => {
-    if (price && !isNaN(price)) {
-      onConfirm(parseInt(price));
-      onClose();
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!price || isNaN(price)) {
+      newErrors.price = "السعر مطلوب ويجب أن يكون رقماً";
+    } else if (parseFloat(price) < 0) {
+      newErrors.price = "يجب أن يكون السعر قيمة موجبة";
     }
+    
+    if (!email) {
+      newErrors.email = "البريد الإلكتروني مطلوب";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "صيغة البريد الإلكتروني غير صحيحة";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleConfirm = async () => {
+    setApiErrors({}); // NOUVEAU: Réinitialiser les erreurs API avant validation
+    if (validateForm()) {
+      await onConfirm(parseInt(price), email, setApiErrors); // NOUVEAU: passer setApiErrors
+    }
+  };
+
+  const handlePriceChange = (e) => {
+    setPrice(e.target.value);
+    if (errors.price) {
+      setErrors(prev => ({ ...prev, price: '' }));
+    }
+    if (apiErrors.price) { // NOUVEAU: Effacer aussi les erreurs API
+      setApiErrors(prev => ({ ...prev, price: '' }));
+    }
+  };
+
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+    if (errors.email) {
+      setErrors(prev => ({ ...prev, email: '' }));
+    }
+    if (apiErrors.email) { // NOUVEAU: Effacer aussi les erreurs API
+      setApiErrors(prev => ({ ...prev, email: '' }));
+    }
+  };
+
+  // NOUVEAU: Fonction pour fermer le popup et réinitialiser les erreurs
+  const handleClose = () => {
+    setApiErrors({});
+    setErrors({});
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -52,15 +101,52 @@ const PricePopup = ({ isOpen, onClose, onConfirm, currentPrice }) => {
           <input
             type="number"
             value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            onChange={handlePriceChange}
             placeholder="أدخل السعر"
+            min="0"
           />
+          {/* Affichage des erreurs de validation pour le prix */}
+          {errors.price && (
+            <div style={{ color: 'red', fontSize: '12px', marginTop: '5px' }}>
+              {errors.price}
+            </div>
+          )}
+          {/* NOUVEAU: Affichage des erreurs API pour le prix */}
+          {apiErrors.price && (
+            <div style={{ color: 'red', fontSize: '12px', marginTop: '5px' }}>
+              {apiErrors.price}
+            </div>
+          )}
+          
+          <label style={{marginTop: '15px'}}>البريد الإلكتروني للخياطة:</label>
+          <input
+            type="email"
+            value={email}
+            onChange={handleEmailChange}
+            placeholder="أدخل بريد الخياطة الإلكتروني"
+          />
+          {/* Affichage des erreurs de validation pour l'email */}
+          {errors.email && (
+            <div style={{ color: 'red', fontSize: '12px', marginTop: '5px' }}>
+              {errors.email}
+            </div>
+          )}
+          {/* NOUVEAU: Affichage des erreurs API pour l'email */}
+          {apiErrors.email && (
+            <div style={{ color: 'red', fontSize: '12px', marginTop: '5px' }}>
+              {apiErrors.email}
+            </div>
+          )}
         </div>
         <div className="popup-actions">
-          <button className="confirm-btn" onClick={handleConfirm}>
+          <button 
+            className="confirm-btn" 
+            onClick={handleConfirm}
+            disabled={!price || !email}
+          >
             تأكيد
           </button>
-          <button className="cancel-btn" onClick={onClose}>
+          <button className="cancel-btn" onClick={handleClose}>
             إلغاء
           </button>
         </div>
@@ -884,64 +970,144 @@ const handleStatusChange = useCallback(async (uniqueId, originalId, orderType, s
   );
 }, [orders]);
 
-  // Fonction pour confirmer le prix et mettre à jour la commande custom
-  const handlePriceConfirm = async (price) => {
-    if (currentOrderId && newStatus && currentCommandCode) {
-      try {
-        const accessToken = localStorage.getItem("accessToken");
-        let response;
+
+
+// Fonction pour confirmer le prix et mettre à jour la commande custom (MODIFIÉE)
+const handlePriceConfirm = async (price, email, setApiErrors) => { // NOUVEAU: ajouter setApiErrors en paramètre
+  if (currentOrderId && newStatus && currentCommandCode) {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      let response;
+      
+      if (newStatus === "قيد التنفيذ") {
+        response = await fetch(`http://127.0.0.1:8000/adminapi/inprogressCommandcustom/${currentCommandCode}/${price}/`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email
+          })
+        });
+
+        // NOUVELLE GESTION DES ERREURS : utiliser setApiErrors au lieu de alert
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          
+          if (response.status === 404) {
+            // Erreur 404 - Couturière non trouvée
+            setApiErrors({ 
+              email: "لا يوجد حساب خياطة مسجل بهذا البريد الإلكتروني" 
+            });
+            return; // Ne pas fermer le popup
+          } else if (response.status === 400) {
+            // Erreur 400 - Prix invalide
+            if (errorData.error && errorData.error.includes("Le prix doit être un nombre valide")) {
+              setApiErrors({ 
+                price: "يجب أن يكون السعر قيمة موجبة" 
+              });
+            } else if (errorData.error && errorData.error.includes("L'email de la couturière est requis")) {
+              setApiErrors({ 
+                email: "البريد الإلكتروني للخياطة مطلوب" 
+              });
+            } else {
+              setApiErrors({ 
+                general: errorData.error || "حدث خطأ في البيانات المرسلة" 
+              });
+            }
+            return; // Ne pas fermer le popup
+          } else {
+            // Autres erreurs
+            console.error('Erreur API:', response.status);
+            setApiErrors({ 
+              general: 'حدث خطأ أثناء تحديث الحالة' 
+            });
+            return;
+          }
+        }
+      } else if (newStatus === "مكتملة") {
         
-        if (newStatus === "قيد التنفيذ") {
-          // Cas existant pour "inprogress"
-          response = await fetch(`http://127.0.0.1:8000/adminapi/inprogressCommandcustom/${currentCommandCode}/${price}/`, {
+        // Garder l'ancienne logique pour "مكتملة"
+        response = await fetch(
+          `http://127.0.0.1:8000/adminapi/MakeCustomCommandDone/${currentCommandCode}/`, 
+          {
             method: 'PATCH',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
             },
-          });
-        } else if (newStatus === "مكتملة") {
-          // Nouveau cas pour "done"
-          response = await fetch(
-            `http://127.0.0.1:8000/adminapi/MakeCustomCommandDone/${currentCommandCode}/`, 
-            {
-              method: 'PATCH',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                price: price
-              })
-            }
-          );
-        }
+            body: JSON.stringify({
+              price: price,
+              email:email
+            })
+          }
+        );
 
-        if (response.ok) {
-          setOrders(prevOrders => 
-            prevOrders.map(order => 
-              order.id === currentOrderId 
-                ? { ...order, statuscommand: newStatus, price: price } 
-                : order
-            )
-          );
-        } else {
-          console.error('Erreur API:', response.status);
-          alert('Une erreur est survenue lors de la mise à jour du statut');
-        }
-      } catch (err) {
-        console.error('Erreur lors de la mise à jour du statut:', err);
-        alert('Une erreur est survenue lors de la mise à jour du statut');
-      }
-    }
+        if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
     
-    setShowPricePopup(false);
-    setCurrentOrderId(null);
-    setCurrentOriginalId(null);
-    setCurrentOrderType(null);
-    setNewStatus("");
-    setCurrentCommandCode(null);
-  };
+    if (response.status === 404) {
+      setApiErrors({ 
+        email: "لا يوجد حساب خياطة مسجل بهذا البريد الإلكتروني" 
+      });
+      return;
+    } else if (response.status === 400) {
+      if (errorData.error && errorData.error.includes("Le prix doit être un nombre positif")) {
+        setApiErrors({ 
+          price: "يجب أن يكون السعر قيمة موجبة" 
+        });
+      } else if (errorData.error && errorData.error.includes("Aucune couturière trouvée avec cet email")) {
+        setApiErrors({ 
+          email: "لا يوجد حساب خياطة مسجل بهذا البريد الإلكتروني" 
+        });
+      } else if (errorData.error && errorData.error.includes("Le prix est requis")) {
+        setApiErrors({ 
+          price: "السعر مطلوب" 
+        });
+      } else {
+        setApiErrors({ 
+          general: errorData.error || "حدث خطأ في البيانات المرسلة" 
+        });
+      }
+      return;
+    } else {
+      console.error('Erreur API:', response.status);
+      setApiErrors({ 
+        general: 'حدث خطأ أثناء تحديث الحالة' 
+      });
+      return;
+    }
+  }
+      }
+
+      // Si on arrive ici, c'est que la requête a réussi
+      if (response.ok) {
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order.id === currentOrderId 
+              ? { ...order, statuscommand: newStatus, price: price } 
+              : order
+          )
+        );
+        // Fermer le popup seulement en cas de succès
+        setShowPricePopup(false);
+        setCurrentOrderId(null);
+        setCurrentOriginalId(null);
+        setCurrentOrderType(null);
+        setNewStatus("");
+        setCurrentCommandCode(null);
+      }
+      
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour du statut:', err);
+      setApiErrors({ 
+        general: 'حدث خطأ في الاتصال بالخادم' 
+      });
+      // Ne pas fermer le popup en cas d'erreur réseau
+    }
+  }
+};
 
   // Fonction pour gérer l'ajout de stock
   // Fonction pour gérer l'ajout de stock

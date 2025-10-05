@@ -222,7 +222,7 @@ export default function AddNewModel() {
           {/* Header */}
           <div className="sticky top-0 z-10 bg-white py-4">
             <div className="relative group flex w-full max-w-md items-center justify-center mx-auto">
-              <h2 className="amiri-bold text-center text-2xl text-[#E5B62B]">
+            <h2 className="amiri-bold text-center text-lg sm:text-xl md:text-2xl text-[#E5B62B]">
                 إضافة نموذج جديد
               </h2>
               <ArrowLeft onClick={() => navigate(-1)} className="absolute left-4 h-5 w-5 cursor-pointer text-[#374151]" />
@@ -256,7 +256,6 @@ export default function AddNewModel() {
                   { value: "femme", label: "نسائي" },
                   { value: "homme", label: "رجالي" },
                   { value: "Enfant", label: "أطفال" },
-                  { value: "babie", label: "رضّع" },
                 ]}
               />
 
@@ -278,8 +277,6 @@ export default function AddNewModel() {
                   { value: "XXXL", label: "XXXL" },
                   { value: "3XL", label: "3XL" },
                   { value: "4XL", label: "4XL" },
-                  { value: "0–3 mois", label: "0–3 mois" },
-                  { value: "6–12 mois", label: "6–12 mois" },
                 ]}
               />
 

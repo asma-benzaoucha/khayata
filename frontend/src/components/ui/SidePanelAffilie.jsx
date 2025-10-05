@@ -112,14 +112,13 @@ export default function SidePanel({ children, menuItems }) {
             {/* Close button */}
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-4 right-4 text-white"
+              className="absolute top-4 right-4  text-white"
             >
-              <X size={24} />
+              <X size={24} className="stroke-white" strokeWidth={2.5}  />
             </button>
 
             {/* Logo inside drawer */}
-            <div className="flex justify-center items-center h-20 border-b border-white/20">
-              <img src="/logo.png" alt="Logo" className="h-14 object-contain" />
+            <div className="flex justify-center items-center h-10  border-white/20">
             </div>
 
             {/* Menu items */}
@@ -150,9 +149,9 @@ export default function SidePanel({ children, menuItems }) {
                   }}
                   className="mt-6 text-[#F0C84B] underline flex items-center gap-2"
                 >
-                <LogOut size={15} />
-                <span                   className=" text-[#F0C84B] "
-                >تسجيل الخروج</span>
+                <LogOut size={15} className="stroke-[#F0C84B]" strokeWidth={2.3} />
+
+                <span  className=" text-[#F0C84B]" >تسجيل الخروج</span>
               </button>
 
 

@@ -21,11 +21,33 @@
     }
   }, [location.pathname, navigate]);
     const handleLogout = () => {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-      navigate("/login");
-    };
+  // Récupérer les informations de l'utilisateur depuis le localStorage
+  const userData = localStorage.getItem('user');
+  
+  if (userData) {
+    try {
+      const user = JSON.parse(userData);
+      
+      // Vérifier le rôle de l'utilisateur
+      
+       if (user.role === 'couturiere') {
+        localStorage.setItem("login_redirect_path", JSON.stringify({
+          "path": "/signup",
+          "button": "انضم الان"
+        }));
+      } else {
+        console.error("Rôle utilisateur non reconnu:", user.role);
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'analyse des données utilisateur:", error);
+    }
+  }
+  
+  navigate("/login");
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+};
   
     // === Récupérer le breadcrumb (إبداعاتي > modèle) ===
     let breadcrumb = "";
@@ -95,25 +117,26 @@
   
 
  {/* Sub Navbar */}
-<div className="flex items-center justify-between px-4 py-2 border-t border-gray-200 text-[#E5B62B] font-semibold">
-  {/* Right: breadcrumb */}
+<div className="flex items-center justify-between px-4 py-2 border-t border-gray-200 font-semibold text-[#E5B62B]">
+ {/* Right: breadcrumb */}
   {location.pathname.startsWith("/MesModels") ? (
     <div
-      className="cursor-pointer"
+      className="cursor-pointer text-[#E5B62B]"
       onClick={() => navigate("/MesModels")}
     >
       {breadcrumb}
     </div>
   ) : (
-    <span>{breadcrumb}</span>  // juste du texte
+    <span className="text-[#E5B62B]">{breadcrumb}</span>  // juste du texte
   )}
 
   {/* Left: إضافة نموذج جديد - seulement si mesmodels */}
   {location.pathname.startsWith("/MesModels") && (
-    <Link to="/AddNewModel" className="flex items-center gap-1">
-      <Plus size={18} />
-      <span>إضافة نموذج جديد</span>
-    </Link>
+    <Link to="/AddNewModel" className="flex items-center gap-1 text-[#E5B62B]">
+  <Plus size={18} className="stroke-[#E5B62B]" strokeWidth={2.3} />
+  <span className="text-[#E5B62B]">إضافة نموذج جديد</span>
+</Link>
+
   )}
 </div>
 
@@ -135,12 +158,11 @@
                 onClick={() => setMobileOpen(false)}
                 className="absolute top-4 right-4 text-white"
               >
-                <X size={24} />
+              <X size={24} className="stroke-white" strokeWidth={2.5}  />
               </button>
   
               {/* Logo inside drawer */}
               <div className="flex justify-center items-center h-20 border-b border-white/20">
-                <img src="/logo.png" alt="Logo" className="h-14 object-contain" />
               </div>
   
               {/* Menu items */}
@@ -165,15 +187,16 @@
   
                 {/* Logout */}
                 <button
-                onClick={() => {
-                  setMobileOpen(false);    // ← Ferme le drawer
-                  setShowConfirm(true);    // ← Ouvre la popup de confirmation
-                }}
-                className="mt-6 text-[#F0C84B] underline flex items-center gap-2"
-              >
-                  <LogOut size={15} />
-                  <span>تسجيل الخروج</span>
-                </button>
+                                  onClick={() => {
+                                    setMobileOpen(false);    // ← Ferme le drawer
+                                    setShowConfirm(true);    // ← Ouvre la popup de confirmation
+                                  }}
+                                  className="mt-6 text-[#F0C84B] underline flex items-center gap-2"
+                                >
+                                <LogOut size={15} className="stroke-[#F0C84B]" strokeWidth={2.3} />
+                
+                                <span  className=" text-[#F0C84B]" >تسجيل الخروج</span>
+                              </button>
               </div>
             </div>
           </div>

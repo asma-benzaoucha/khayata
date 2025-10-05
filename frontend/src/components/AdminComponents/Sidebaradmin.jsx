@@ -19,6 +19,8 @@ import "../../style/AdminStyle/Sidebaradmin.css";
 import logout from "../../assets/logout.png";
 
 export default function Sidebaradmin() {
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false); // État pour la popup
+
   const [active, setActive] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
@@ -92,6 +94,19 @@ export default function Sidebaradmin() {
     navigate("/admin/login");
   };
 
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true); // Afficher la popup de confirmation
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutConfirm(false); // Fermer la popup
+    handleLogout(); // Exécuter le logout
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutConfirm(false); // Fermer la popup sans logout
+  };
+
   return (
     <div className="sidebar">
       <div className="sidebar-header">
@@ -112,11 +127,37 @@ export default function Sidebaradmin() {
         ))}
       </ul>
       <div className="sidebar-footer">
-        <button className="logout-btn" onClick={handleLogout}>
+        <button className="logout-btn" onClick={handleLogoutClick}>
           <img src={logout} alt="تسجيل الخروج" className="logout-icon" />
           تسجيل الخروج
         </button>
+
+
       </div>
+
+       {/* Popup de confirmation */}
+      {showLogoutConfirm && (
+        <div className="logout-confirm-overlay">
+          <div className="logout-confirm-popup">
+            <h3>تأكيد الخروج</h3>
+            <p>هل تريد حقًا تسجيل الخروج؟</p>
+            <div className="logout-confirm-buttons">
+              <button 
+                className="confirm-btn" 
+                onClick={handleConfirmLogout}
+              >
+                نعم
+              </button>
+              <button 
+                className="cancel-btn" 
+                onClick={handleCancelLogout}
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

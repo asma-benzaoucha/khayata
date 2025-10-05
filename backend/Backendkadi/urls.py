@@ -23,7 +23,6 @@ from . import views
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
-    
 )
 
 urlpatterns = [
@@ -57,7 +56,6 @@ urlpatterns = [
     path("profile/affiliate/",AffiliateProfileView.as_view(), name="profile"),
     path("affiliate/orders/", AffiliateOrdersView.as_view(), name="affiliate-orders"),
     path('changepasswordWithVerification/affiliate', views.change_password_with_verification, name='change_password'),
-    
 
 
 

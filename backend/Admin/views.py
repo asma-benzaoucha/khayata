@@ -1624,15 +1624,28 @@ def update_custom_order_statusversinprogress(request, codeorder, new_price):
             )
     try:
        
-        
+    
         # Convertir le nouveau prix en décimal
         new_price_decimal = Decimal(new_price)
-        
+        email = request.data.get('email')
+        if not email:
+            return Response(
+                {"error": "L'email de la couturière est requis."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            couturiere_user = User.objects.get(email=email, role='couturiere')
+        except User.DoesNotExist:
+            return Response(
+                {"error": "Aucune couturière trouvée avec cet email."},
+                status=status.HTTP_404_NOT_FOUND
+            )
         # Récupérer la commande par son code
         order = get_object_or_404(CustomOrder, codeorder=codeorder)
         
         # Mettre à jour le statut et le prix
         order.state = 'inprogress'
+        order.assigned_couturiere = couturiere_user
         order.initial_price = new_price_decimal
         order.save()
         
@@ -1640,7 +1653,8 @@ def update_custom_order_statusversinprogress(request, codeorder, new_price):
             {
                 "message": f"Commande {codeorder} mise à jour avec succès.",
                 "new_status": "inprogress",
-                "new_price": float(new_price_decimal)
+                "new_price": float(new_price_decimal),
+                "assigned_couturiere": couturiere_user.email
             },
             status=status.HTTP_200_OK
         )
@@ -2005,12 +2019,13 @@ def make_custom_command_done(request, ordercode):
     # Récupérer la commande par son code
     custom_order = get_object_or_404(CustomOrder, codeorder=ordercode)
     
-    # Vérifier si l'état actuel est "pending" (En attente)
+    # Vérifier si l'état actuel est "waiting" (En attente)
     if custom_order.state == 'waiting':
         try:
             # Charger le corps de la requête JSON
             data = json.loads(request.body)
             price = data.get('price')
+            email = data.get('email')  # Récupérer l'email
             
             # Vérifier si le prix est fourni
             if price is None:
@@ -2033,6 +2048,22 @@ def make_custom_command_done(request, ordercode):
             # Mettre à jour le prix initial
             custom_order.initial_price = price
             
+            # Vérifier et assigner la couturière si l'email est fourni
+            if email:
+                try:
+                    # Vérifier si l'utilisateur existe et est une couturière
+                    couturiere_user = User.objects.get(
+                        email=email, 
+                        role='couturiere'
+                    )
+                    # Assigner la couturière à la commande
+                    custom_order.assigned_couturiere = couturiere_user
+                except User.DoesNotExist:
+                    return Response(
+                        {"error": "Aucune couturière trouvée avec cet email"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
         except json.JSONDecodeError:
             return Response(
                 {"error": "Corps de la requête JSON invalide"},
@@ -2045,13 +2076,12 @@ def make_custom_command_done(request, ordercode):
 
     custom_order.save()
     
-    
-    
+    # Nettoyage des anciennes commandes (votre code existant)
     two_months_ago = timezone.now() - timedelta(days=60)
     old_orders = CustomOrder.objects.filter(
-    command_type='personalized',
-    state__in=['done', 'cancelled'],  
-    completed_at__lt=two_months_ago
+        command_type='personalized',
+        state__in=['done', 'cancelled'],  
+        completed_at__lt=two_months_ago
     )
     old_orders.delete()
     
@@ -2060,7 +2090,8 @@ def make_custom_command_done(request, ordercode):
             "message": "État de la commande mis à jour avec succès",
             "order_code": custom_order.codeorder,
             "new_state": custom_order.state,
-            "initial_price": custom_order.initial_price
+            "initial_price": custom_order.initial_price,
+            "assigned_couturiere": custom_order.assigned_couturiere.email if custom_order.assigned_couturiere else None
         },
         status=status.HTTP_200_OK
     )

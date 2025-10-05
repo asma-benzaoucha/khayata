@@ -87,11 +87,39 @@ class UserSerializer(serializers.ModelSerializer):
 #                 if not dropshipper.is_accepted:
 #                     raise serializers.ValidationError("Votre compte dropshipper est en attente de validation.")
 #             except Dropshipper.DoesNotExist:
-#                 raise serializers.ValidationError("Compte dropshipper introuvable.")
+#                 ra
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# ise serializers.ValidationError("Compte dropshipper introuvable.")
 
 #         data['user'] = user
 #         return data
-    
+from .models import FashionModel, StockVariantForFashionModels,ModelImage
+from django.db import transaction
+from webcolors import CSS3_NAMES_TO_HEX
+from rest_framework import serializers
+from .models import CustomOrder, CustomOrderImage
+
     
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     email = serializers.EmailField()
@@ -331,8 +359,29 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 
+import re
 
 
+# class StockVariantForFashionModelsSerializer(serializers.ModelSerializer):
+#     hex = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = StockVariantForFashionModels
+#         fields = ["id", "size", "color", "quantity", "hex"]
+
+#     def get_hex(self, obj):
+        
+#         color_name = str(obj.color).strip()
+#         if re.search(r'[\u0600-\u06FF]', color_name):
+#             return color_name
+#         try:
+#             return CSS3_NAMES_TO_HEX[obj.color.lower()]
+#         except KeyError:
+#             return "#cccccc"
+
+import re
+from webcolors import CSS3_NAMES_TO_HEX
+from rest_framework import serializers
 
 class StockVariantForFashionModelsSerializer(serializers.ModelSerializer):
     hex = serializers.SerializerMethodField()
@@ -342,10 +391,22 @@ class StockVariantForFashionModelsSerializer(serializers.ModelSerializer):
         fields = ["id", "size", "color", "quantity", "hex"]
 
     def get_hex(self, obj):
+        # Si la couleur est absente (None ou vide), on ne renvoie rien
+        if not obj.color:
+            return None
+
+        color_name = str(obj.color).strip()
+
+        # Si la couleur est en arabe → on la renvoie telle quelle
+        if re.search(r'[\u0600-\u06FF]', color_name):
+            return color_name
+
+        # Sinon, on essaie de convertir le nom en code hex
         try:
-            return CSS3_NAMES_TO_HEX[obj.color.lower()]
+            return CSS3_NAMES_TO_HEX[color_name.lower()]
         except KeyError:
-            return "#cccccc"
+            return None
+
 
 
 class CouturiereModelSerializer(serializers.ModelSerializer):
@@ -441,20 +502,39 @@ class CustomOrderImageSerializer(serializers.ModelSerializer):
 
 
 
+
+import re
+from webcolors import CSS3_NAMES_TO_HEX
+from rest_framework import serializers
 from .models import StockVariantForCommands
+
+
 class StockVariantForCommandsSerializer(serializers.ModelSerializer):
     hex = serializers.SerializerMethodField()
 
     class Meta:
         model = StockVariantForCommands
-        fields = ["id", "size", "color", "quantity","hex"]
-        
+        fields = ["id", "size", "color", "quantity", "hex"]
 
     def get_hex(self, obj):
+        # Si la couleur est absente ou None
+        if not obj.color:
+            return "#cccccc"  # Couleur par défaut
+
+        color_name = str(obj.color).strip()
+
+        # Si la couleur est en arabe → on la renvoie telle quelle
+        if re.search(r'[\u0600-\u06FF]', color_name):
+            return color_name
+
         try:
-            return CSS3_NAMES_TO_HEX[obj.color.lower()]
+            # Convertit en hex si possible
+            return CSS3_NAMES_TO_HEX[color_name.lower()]
         except KeyError:
+            # Si la couleur n'est pas reconnue, retourne un gris par défaut
             return "#cccccc"
+
+
 
 
 class CustomOrderSerializer(serializers.ModelSerializer):

@@ -74,7 +74,7 @@ export default function Demandes() {
           description={m.description}
           status={m.state}
 
-          images={m.custom_images}
+            images={m.custom_images.map(img => `http://127.0.0.1:8000${img.image}`)}
           sizes={m.variants.map((v) => ({
             size: v.size,
             color: getArabicColorLabel(v.color),
